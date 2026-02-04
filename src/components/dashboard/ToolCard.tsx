@@ -8,7 +8,7 @@ import {
   Line,
 } from "recharts";
 
-type ToolType = "tavily" | "fullenrich" | "buyercaddy";
+type ToolType = "tavily" | "fullenrich" | "buyercaddy" | "posthog";
 
 interface ToolCardProps {
   tool: ToolType;
@@ -37,6 +37,11 @@ const toolConfig: Record<
     bgClass: "bg-buyercaddy-muted",
     description: "Sales Intelligence",
   },
+  posthog: {
+    color: "hsl(var(--posthog))",
+    bgClass: "bg-posthog-muted",
+    description: "Product Analytics",
+  },
 };
 
 export function ToolCard({
@@ -64,49 +69,49 @@ export function ToolCard({
   }));
 
   return (
-    <div className="relative flex flex-col rounded-lg border border-border bg-card p-5 card-shadow h-full">
+    <div className="relative flex flex-col rounded-lg border border-border bg-card p-3 card-shadow h-full">
       {/* Alert Indicator */}
       {(isLow || isWarning) && (
         <div
           className={cn(
-            "absolute top-4 right-4 h-2.5 w-2.5 rounded-full",
+            "absolute top-3 right-3 h-2 w-2 rounded-full",
             isLow ? "bg-destructive animate-pulse-slow" : "bg-warning"
           )}
         />
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-2 mb-2">
         <div
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg",
+            "flex h-8 w-8 items-center justify-center rounded-lg",
             config.bgClass
           )}
         >
           <span
-            className="text-lg font-bold"
+            className="text-sm font-bold"
             style={{ color: config.color }}
           >
             {name.charAt(0)}
           </span>
         </div>
         <div>
-          <h3 className="text-base font-semibold text-foreground">{name}</h3>
-          <p className="text-xs text-muted-foreground">{config.description}</p>
+          <h3 className="text-sm font-semibold text-foreground">{name}</h3>
+          <p className="text-[10px] text-muted-foreground">{config.description}</p>
         </div>
       </div>
 
       {/* Ring Chart & Credits */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative h-20 w-20">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="relative h-14 w-14 shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
-                innerRadius={28}
-                outerRadius={38}
+                innerRadius={20}
+                outerRadius={26}
                 startAngle={90}
                 endAngle={-270}
                 paddingAngle={2}
@@ -118,23 +123,23 @@ export function ToolCard({
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-sm font-bold text-foreground">
+            <span className="text-[10px] font-bold text-foreground">
               {percentRemaining.toFixed(0)}%
             </span>
           </div>
         </div>
         <div>
-          <p className="text-2xl font-bold text-foreground">
+          <p className="text-lg font-bold text-foreground">
             {creditsRemaining.toLocaleString()}
           </p>
-          <p className="text-xs text-muted-foreground">credits remaining</p>
+          <p className="text-[10px] text-muted-foreground">credits left</p>
         </div>
       </div>
 
       {/* Sparkline */}
-      <div className="pt-3 border-t border-border">
-        <p className="mb-2 text-xs text-muted-foreground">7-day usage</p>
-        <ResponsiveContainer width="100%" height={32}>
+      <div className="pt-2 border-t border-border">
+        <p className="mb-1 text-[10px] text-muted-foreground">7-day usage</p>
+        <ResponsiveContainer width="100%" height={24}>
           <LineChart data={sparkData}>
             <Line
               type="monotone"

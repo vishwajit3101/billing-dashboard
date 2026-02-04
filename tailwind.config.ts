@@ -77,6 +77,10 @@ export default {
           DEFAULT: "hsl(var(--buyercaddy))",
           muted: "hsl(var(--buyercaddy-muted))",
         },
+        posthog: {
+          DEFAULT: "hsl(var(--posthog))",
+          muted: "hsl(var(--posthog-muted))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

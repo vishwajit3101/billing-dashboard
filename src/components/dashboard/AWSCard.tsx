@@ -37,16 +37,16 @@ export function AWSCard() {
   const isOverBudget = currentSpend > budget;
 
   return (
-    <div className="relative flex flex-col rounded-lg border border-border bg-card p-6 card-shadow h-full">
+    <div className="relative flex flex-col rounded-lg border border-border bg-card p-4 card-shadow h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-aws-muted">
-            <Server className="h-6 w-6 text-aws" />
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-aws-muted">
+            <Server className="h-5 w-5 text-aws" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">AWS</h2>
-            <p className="text-sm text-muted-foreground">Cloud Infrastructure</p>
+            <h2 className="text-base font-semibold text-foreground">AWS</h2>
+            <p className="text-xs text-muted-foreground">Cloud Infrastructure</p>
           </div>
         </div>
         {isOverBudget && <StatusBadge status="critical" label="Over Budget" />}
@@ -56,46 +56,46 @@ export function AWSCard() {
       </div>
 
       {/* Budget vs Actual */}
-      <div className="mb-5">
-        <div className="flex items-baseline justify-between mb-2">
+      <div className="mb-3">
+        <div className="flex items-baseline justify-between mb-1.5">
           <div>
-            <span className="text-3xl font-bold text-foreground">
+            <span className="text-2xl font-bold text-foreground">
               ${currentSpend.toLocaleString()}
             </span>
-            <span className="text-muted-foreground ml-2">
-              / ${budget.toLocaleString()} budget
+            <span className="text-muted-foreground text-sm ml-1.5">
+              / ${budget.toLocaleString()}
             </span>
           </div>
           <div className="flex items-center gap-1 text-destructive">
-            <ArrowUpRight className="h-4 w-4" />
-            <span className="text-sm font-medium">+{weeklyChange}% this week</span>
+            <ArrowUpRight className="h-3 w-3" />
+            <span className="text-xs font-medium">+{weeklyChange}%</span>
           </div>
         </div>
-        <div className="h-2 rounded-full bg-secondary">
+        <div className="h-1.5 rounded-full bg-secondary">
           <div
-            className={`h-2 rounded-full transition-all ${
+            className={`h-1.5 rounded-full transition-all ${
               isOverBudget ? "bg-destructive" : "bg-aws"
             }`}
             style={{ width: `${Math.min(percentOfBudget, 100)}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {percentOfBudget.toFixed(0)}% of monthly budget used
+        <p className="mt-1 text-[10px] text-muted-foreground">
+          {percentOfBudget.toFixed(0)}% of monthly budget
         </p>
       </div>
 
       {/* Monthly Trend Chart */}
-      <div className="mb-5 flex-1 min-h-[100px]">
-        <p className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Monthly Spend Trend
+      <div className="mb-3 flex-1 min-h-0">
+        <p className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Monthly Spend
         </p>
-        <ResponsiveContainer width="100%" height={90}>
+        <ResponsiveContainer width="100%" height="70%">
           <LineChart data={monthlySpend}>
             <XAxis
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
             />
             <YAxis hide />
             <Tooltip
@@ -103,7 +103,7 @@ export function AWSCard() {
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
-                fontSize: "12px",
+                fontSize: "11px",
               }}
               formatter={(value: number) => [`$${value.toLocaleString()}`, "Spend"]}
             />
@@ -112,34 +112,34 @@ export function AWSCard() {
               dataKey="spend"
               stroke="hsl(var(--aws))"
               strokeWidth={2}
-              dot={{ fill: "hsl(var(--aws))", strokeWidth: 0, r: 3 }}
+              dot={{ fill: "hsl(var(--aws))", strokeWidth: 0, r: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Service Breakdown */}
-      <div className="pt-4 border-t border-border">
-        <p className="mb-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="pt-2 border-t border-border">
+        <p className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Cost by Service
         </p>
-        <ResponsiveContainer width="100%" height={80}>
-          <BarChart data={serviceBreakdown} layout="vertical" barSize={16}>
+        <ResponsiveContainer width="100%" height={60}>
+          <BarChart data={serviceBreakdown} layout="vertical" barSize={10}>
             <XAxis type="number" hide />
             <YAxis
               type="category"
               dataKey="service"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
-              width={50}
+              tick={{ fontSize: 9, fill: "hsl(var(--foreground))" }}
+              width={40}
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
-                fontSize: "12px",
+                fontSize: "11px",
               }}
               formatter={(value: number) => [`$${value.toLocaleString()}`, "Cost"]}
             />

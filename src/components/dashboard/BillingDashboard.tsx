@@ -5,27 +5,27 @@ import { ToolCard } from "./ToolCard";
 
 export function BillingDashboard() {
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mx-auto max-w-[1440px]">
+    <div className="h-screen overflow-hidden bg-background p-4">
+      <div className="mx-auto max-w-[1440px] h-full flex flex-col">
         {/* Header */}
         <DashboardHeader />
 
         {/* Dashboard Grid */}
-        <div className="mt-6 grid gap-5">
+        <div className="mt-4 flex-1 grid grid-rows-[1fr_auto] gap-4">
           {/* Top Row - Primary Tools */}
-          <div className="grid grid-cols-5 gap-5">
+          <div className="grid grid-cols-5 gap-4 min-h-0">
             {/* Anthropic - Takes 3 columns */}
-            <div className="col-span-3">
+            <div className="col-span-3 min-h-0">
               <AnthropicCard />
             </div>
             {/* AWS - Takes 2 columns */}
-            <div className="col-span-2">
+            <div className="col-span-2 min-h-0">
               <AWSCard />
             </div>
           </div>
 
           {/* Bottom Row - Supporting Tools */}
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-4 gap-4">
             <ToolCard
               tool="tavily"
               name="Tavily"
@@ -46,6 +46,13 @@ export function BillingDashboard() {
               creditsUsed={1200}
               creditsTotal={8000}
               sparklineData={[80, 120, 90, 110, 140, 100, 130]}
+            />
+            <ToolCard
+              tool="posthog"
+              name="PostHog"
+              creditsUsed={18500}
+              creditsTotal={50000}
+              sparklineData={[450, 520, 480, 550, 510, 580, 540]}
             />
           </div>
         </div>

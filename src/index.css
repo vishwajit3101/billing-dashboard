@@ -63,6 +63,9 @@
     --buyercaddy: 160 60% 45%;
     --buyercaddy-muted: 160 60% 95%;
 
+    --posthog: 350 80% 55%;
+    --posthog-muted: 350 80% 95%;
+
     /* UI elements */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
@@ -139,6 +142,9 @@
 
     --buyercaddy: 160 60% 45%;
     --buyercaddy-muted: 160 60% 20%;
+
+    --posthog: 350 80% 55%;
+    --posthog-muted: 350 80% 20%;
 
     --border: 217 33% 17%;
     --input: 217 33% 17%;
