@@ -2,6 +2,7 @@ import { DashboardHeader } from "./DashboardHeader";
 import { AnthropicCard } from "./AnthropicCard";
 import { AWSCard } from "./AWSCard";
 import { ToolCard } from "./ToolCard";
+import { PostHogCard } from "./PostHogCard";
 
 export function BillingDashboard() {
   return (
@@ -47,13 +48,7 @@ export function BillingDashboard() {
               creditsTotal={8000}
               sparklineData={[80, 120, 90, 110, 140, 100, 130]}
             />
-            <ToolCard
-              tool="posthog"
-              name="PostHog"
-              creditsUsed={18500}
-              creditsTotal={50000}
-              sparklineData={[450, 520, 480, 550, 510, 580, 540]}
-            />
+            <PostHogCard />
           </div>
         </div>
       </div>
