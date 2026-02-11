@@ -7,7 +7,7 @@ import { ToolCard } from "./ToolCard";
 import { RiskDetailPanel } from "./RiskDetailPanel";
 
 export function BillingDashboard() {
-  const [riskPanel, setRiskPanel] = useState<{ open: boolean; type: "anthropic" | "aws" }>({
+  const [riskPanel, setRiskPanel] = useState<{ open: boolean; type: "anthropic" | "aws" | "tavily" | "fullenrich" | "buyercaddy" }>({
     open: false,
     type: "anthropic",
   });
@@ -43,6 +43,7 @@ export function BillingDashboard() {
               creditsUsed={7200}
               creditsTotal={10000}
               sparklineData={[320, 280, 410, 350, 390, 420, 380]}
+              onClick={() => setRiskPanel({ open: true, type: "tavily" })}
             />
             <ToolCard
               tool="fullenrich"
@@ -50,6 +51,7 @@ export function BillingDashboard() {
               creditsUsed={4500}
               creditsTotal={5000}
               sparklineData={[180, 220, 190, 240, 210, 250, 230]}
+              onClick={() => setRiskPanel({ open: true, type: "fullenrich" })}
             />
             <ToolCard
               tool="buyercaddy"
@@ -57,6 +59,7 @@ export function BillingDashboard() {
               creditsUsed={1200}
               creditsTotal={8000}
               sparklineData={[80, 120, 90, 110, 140, 100, 130]}
+              onClick={() => setRiskPanel({ open: true, type: "buyercaddy" })}
             />
           </div>
         </div>
