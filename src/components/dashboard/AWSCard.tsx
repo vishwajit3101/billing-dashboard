@@ -1,5 +1,5 @@
 import { StatusBadge } from "./StatusBadge";
-import { TrendingUp, DollarSign, ArrowUpRight, Server } from "lucide-react";
+import { ArrowUpRight, Server } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -9,8 +9,13 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  CartesianGrid,
 } from "recharts";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const monthlySpend = [
   { month: "Sep", spend: 8200 },
@@ -22,14 +27,18 @@ const monthlySpend = [
 ];
 
 const serviceBreakdown = [
-  { service: "EC2", cost: 5200, color: "hsl(var(--aws))" },
-  { service: "S3", cost: 2100, color: "hsl(30 100% 60%)" },
-  { service: "RDS", cost: 3800, color: "hsl(30 100% 70%)" },
-  { service: "Lambda", cost: 1800, color: "hsl(30 100% 80%)" },
-  { service: "Other", cost: 1200, color: "hsl(30 100% 90%)" },
+  { service: "EC2", cost: 5200 },
+  { service: "S3", cost: 2100 },
+  { service: "RDS", cost: 3800 },
+  { service: "Lambda", cost: 1800 },
+  { service: "Other", cost: 1200 },
 ];
 
-export function AWSCard() {
+interface AWSCardProps {
+  onRiskClick?: () => void;
+}
+
+export function AWSCard({ onRiskClick }: AWSCardProps) {
   const currentSpend = 14100;
   const budget = 12000;
   const percentOfBudget = (currentSpend / budget) * 100;
@@ -49,10 +58,19 @@ export function AWSCard() {
             <p className="text-xs text-muted-foreground">Cloud Infrastructure</p>
           </div>
         </div>
-        {isOverBudget && <StatusBadge status="critical" label="Over Budget" />}
-        {weeklyChange > 15 && !isOverBudget && (
-          <StatusBadge status="warning" label="Spend Spike" />
-        )}
+        <TooltipProvider>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <button onClick={onRiskClick} className="cursor-pointer">
+                {isOverBudget && <StatusBadge status="critical" label="Over Budget" />}
+                {weeklyChange > 15 && !isOverBudget && (
+                  <StatusBadge status="warning" label="Spend Spike" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Click to view risk details</TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
       </div>
 
       {/* Budget vs Actual */}
@@ -71,17 +89,26 @@ export function AWSCard() {
             <span className="text-xs font-medium">+{weeklyChange}%</span>
           </div>
         </div>
-        <div className="h-1.5 rounded-full bg-secondary">
-          <div
-            className={`h-1.5 rounded-full transition-all ${
-              isOverBudget ? "bg-destructive" : "bg-aws"
-            }`}
-            style={{ width: `${Math.min(percentOfBudget, 100)}%` }}
-          />
-        </div>
-        <p className="mt-1 text-[10px] text-muted-foreground">
-          {percentOfBudget.toFixed(0)}% of monthly budget
-        </p>
+        <TooltipProvider>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-pointer" onClick={onRiskClick}>
+                <div className="h-1.5 rounded-full bg-secondary">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      isOverBudget ? "bg-destructive" : "bg-aws"
+                    }`}
+                    style={{ width: `${Math.min(percentOfBudget, 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {percentOfBudget.toFixed(0)}% of monthly budget
+                </p>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Click to view risk details</TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
       </div>
 
       {/* Monthly Trend Chart */}

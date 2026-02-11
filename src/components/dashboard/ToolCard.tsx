@@ -8,7 +8,7 @@ import {
   Line,
 } from "recharts";
 
-type ToolType = "tavily" | "fullenrich" | "buyercaddy" | "posthog";
+type ToolType = "tavily" | "fullenrich" | "buyercaddy";
 
 interface ToolCardProps {
   tool: ToolType;
@@ -36,11 +36,6 @@ const toolConfig: Record<
     color: "hsl(var(--buyercaddy))",
     bgClass: "bg-buyercaddy-muted",
     description: "Sales Intelligence",
-  },
-  posthog: {
-    color: "hsl(var(--posthog))",
-    bgClass: "bg-posthog-muted",
-    description: "Product Analytics",
   },
 };
 
