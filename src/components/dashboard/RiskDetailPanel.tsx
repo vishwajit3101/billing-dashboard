@@ -1,4 +1,5 @@
-import { X, ExternalLink, Bell, TrendingDown, Calendar, DollarSign, ArrowUpRight, Server } from "lucide-react";
+import { ExternalLink, Bell, Calendar, DollarSign, ArrowUpRight, Server } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -114,20 +115,19 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
               </ResponsiveContainer>
             </div>
 
-            {/* Actions */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-                <TrendingDown className="h-4 w-4" />
-                View usage details
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-                <Bell className="h-4 w-4" />
-                Notify finance
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-                <ExternalLink className="h-4 w-4" />
-                Open refill link
-              </Button>
+            {/* Unified Action Footer */}
+            <div className="pt-4 border-t border-border space-y-3">
+              <p className="text-xs text-muted-foreground">Last alert sent 2h ago</p>
+              <div className="flex gap-3">
+                <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Alert Escalated", description: "Finance team has been notified." })}>
+                  <Bell className="h-4 w-4 mr-1" />
+                  Escalate Alert
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Open Refill Portal
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>
@@ -206,16 +206,19 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
             </ResponsiveContainer>
           </div>
 
-          {/* Actions */}
-          <div className="space-y-2 pt-2 border-t border-border">
-            <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-              <ExternalLink className="h-4 w-4" />
-              View AWS Cost Explorer
-            </Button>
-            <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-              <TrendingDown className="h-4 w-4" />
-              Reduce usage suggestions
-            </Button>
+          {/* Unified Action Footer */}
+          <div className="pt-4 border-t border-border space-y-3">
+            <p className="text-xs text-muted-foreground">Last alert sent 4h ago</p>
+            <div className="flex gap-3">
+              <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Cost Breakdown", description: "Opening detailed cost analysis." })}>
+                <DollarSign className="h-4 w-4 mr-1" />
+                View Cost Breakdown
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Open AWS Console
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
