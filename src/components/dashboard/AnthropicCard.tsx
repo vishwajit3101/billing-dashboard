@@ -1,15 +1,19 @@
 import { StatusBadge } from "./StatusBadge";
 import { TrendingDown, DollarSign, Calendar, Zap } from "lucide-react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
   ResponsiveContainer,
   Area,
   AreaChart,
+  XAxis,
+  YAxis,
+  Tooltip,
 } from "recharts";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const usageData = [
   { day: "Jan 20", credits: 12500 },
@@ -28,7 +32,11 @@ const usageData = [
   { day: "Feb 2", credits: 19500 },
 ];
 
-export function AnthropicCard() {
+interface AnthropicCardProps {
+  onRiskClick?: () => void;
+}
+
+export function AnthropicCard({ onRiskClick }: AnthropicCardProps) {
   const creditsRemaining = 42350;
   const totalCredits = 500000;
   const percentRemaining = (creditsRemaining / totalCredits) * 100;
@@ -48,9 +56,18 @@ export function AnthropicCard() {
             <p className="text-xs text-muted-foreground">Claude API Credits</p>
           </div>
         </div>
-        {isLow && <StatusBadge status="critical" label="Credits Critical" />}
-        {isWarning && <StatusBadge status="warning" label="Credits Low" />}
-        {!isLow && !isWarning && <StatusBadge status="healthy" label="Healthy" />}
+        <TooltipProvider>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <button onClick={onRiskClick} className="cursor-pointer">
+                {isLow && <StatusBadge status="critical" label="Credits Critical" />}
+                {isWarning && <StatusBadge status="warning" label="Credits Low" />}
+                {!isLow && !isWarning && <StatusBadge status="healthy" label="Healthy" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Click to view risk details</TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
       </div>
 
       {/* Main Metric */}
@@ -61,17 +78,24 @@ export function AnthropicCard() {
           </span>
           <span className="text-sm text-muted-foreground">credits left</span>
         </div>
-        <div className="mt-1.5 flex items-center gap-3">
-          <div className="h-1.5 flex-1 rounded-full bg-secondary">
-            <div
-              className="h-1.5 rounded-full bg-anthropic transition-all"
-              style={{ width: `${percentRemaining}%` }}
-            />
-          </div>
-          <span className="text-xs font-medium text-muted-foreground">
-            {percentRemaining.toFixed(1)}%
-          </span>
-        </div>
+        <TooltipProvider>
+          <UITooltip>
+            <TooltipTrigger asChild>
+              <div className="mt-1.5 flex items-center gap-3 cursor-pointer" onClick={onRiskClick}>
+                <div className="h-1.5 flex-1 rounded-full bg-secondary">
+                  <div
+                    className="h-1.5 rounded-full bg-anthropic transition-all"
+                    style={{ width: `${percentRemaining}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {percentRemaining.toFixed(1)}%
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Click to view risk details</TooltipContent>
+          </UITooltip>
+        </TooltipProvider>
       </div>
 
       {/* Chart */}

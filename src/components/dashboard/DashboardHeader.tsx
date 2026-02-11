@@ -1,4 +1,4 @@
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/select";
 
 export function DashboardHeader() {
+  const lastSynced = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   return (
     <header className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -26,6 +28,9 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-3">
+        <span className="text-xs text-muted-foreground">
+          Last synced: {lastSynced}
+        </span>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
           <Select defaultValue="30d">
@@ -40,7 +45,8 @@ export function DashboardHeader() {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="gap-2">
+          <Download className="h-4 w-4" />
           Export Report
         </Button>
       </div>
