@@ -16,6 +16,7 @@ interface ToolCardProps {
   creditsUsed: number;
   creditsTotal: number;
   sparklineData: number[];
+  onClick?: () => void;
 }
 
 const toolConfig: Record<
@@ -45,6 +46,7 @@ export function ToolCard({
   creditsUsed,
   creditsTotal,
   sparklineData,
+  onClick,
 }: ToolCardProps) {
   const config = toolConfig[tool];
   const creditsRemaining = creditsTotal - creditsUsed;
@@ -64,7 +66,10 @@ export function ToolCard({
   }));
 
   return (
-    <div className="relative flex flex-col rounded-lg border border-border bg-card p-3 card-shadow h-full">
+    <div
+      className="relative flex flex-col rounded-lg border border-border bg-card p-3 card-shadow h-full cursor-pointer transition-shadow hover:card-shadow-md"
+      onClick={onClick}
+    >
       {/* Alert Indicator */}
       {(isLow || isWarning) && (
         <div

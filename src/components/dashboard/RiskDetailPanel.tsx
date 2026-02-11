@@ -21,10 +21,80 @@ import {
   Line,
 } from "recharts";
 
+type ToolType = "tavily" | "fullenrich" | "buyercaddy";
+
+interface ToolConfig {
+  name: string;
+  color: string;
+  description: string;
+  creditsRemaining: number;
+  creditsTotal: number;
+  avgDaily: number;
+  exhaustionDate: string;
+  sparklineData: { day: string; credits: number }[];
+}
+
+const toolConfigs: Record<ToolType, ToolConfig> = {
+  tavily: {
+    name: "Tavily",
+    color: "hsl(var(--tavily))",
+    description: "Search API credit monitoring",
+    creditsRemaining: 2800,
+    creditsTotal: 10000,
+    avgDaily: 420,
+    exhaustionDate: "February 17, 2026",
+    sparklineData: [
+      { day: "Feb 4", credits: 320 },
+      { day: "Feb 5", credits: 280 },
+      { day: "Feb 6", credits: 410 },
+      { day: "Feb 7", credits: 350 },
+      { day: "Feb 8", credits: 390 },
+      { day: "Feb 9", credits: 420 },
+      { day: "Feb 10", credits: 380 },
+    ],
+  },
+  fullenrich: {
+    name: "FullEnrich",
+    color: "hsl(var(--fullenrich))",
+    description: "Data enrichment credit monitoring",
+    creditsRemaining: 500,
+    creditsTotal: 5000,
+    avgDaily: 230,
+    exhaustionDate: "February 13, 2026",
+    sparklineData: [
+      { day: "Feb 4", credits: 180 },
+      { day: "Feb 5", credits: 220 },
+      { day: "Feb 6", credits: 190 },
+      { day: "Feb 7", credits: 240 },
+      { day: "Feb 8", credits: 210 },
+      { day: "Feb 9", credits: 250 },
+      { day: "Feb 10", credits: 230 },
+    ],
+  },
+  buyercaddy: {
+    name: "Buyercaddy",
+    color: "hsl(var(--buyercaddy))",
+    description: "Sales intelligence credit monitoring",
+    creditsRemaining: 6800,
+    creditsTotal: 8000,
+    avgDaily: 110,
+    exhaustionDate: "April 12, 2026",
+    sparklineData: [
+      { day: "Feb 4", credits: 80 },
+      { day: "Feb 5", credits: 120 },
+      { day: "Feb 6", credits: 90 },
+      { day: "Feb 7", credits: 110 },
+      { day: "Feb 8", credits: 140 },
+      { day: "Feb 9", credits: 100 },
+      { day: "Feb 10", credits: 130 },
+    ],
+  },
+};
+
 interface RiskDetailPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: "anthropic" | "aws";
+  type: "anthropic" | "aws" | ToolType;
 }
 
 const anthropicUsage = [
@@ -55,10 +125,87 @@ const awsServices = [
 ];
 
 export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelProps) {
+  // Tool card panels (tavily, fullenrich, buyercaddy)
+  if (type !== "anthropic" && type !== "aws") {
+    const config = toolConfigs[type];
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
+          <SheetHeader className="pb-4 border-b border-border">
+            <SheetTitle className="flex items-center gap-2 text-foreground">
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${config.color}20` }}>
+                <span className="text-sm font-bold" style={{ color: config.color }}>{config.name.charAt(0)}</span>
+              </div>
+              {config.name} Risk Details
+            </SheetTitle>
+            <SheetDescription>{config.description}</SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-6 pt-6 max-w-full">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground mb-1">Credits Remaining</p>
+                <p className="text-2xl font-bold text-foreground">{config.creditsRemaining.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground mb-1">Avg Daily Usage</p>
+                <p className="text-2xl font-bold text-foreground">{config.avgDaily.toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Calendar className="h-4 w-4 text-destructive" />
+                <p className="text-xs font-medium text-destructive">Predicted Exhaustion</p>
+              </div>
+              <p className="text-xl font-bold text-destructive">{config.exhaustionDate}</p>
+              <p className="text-xs text-muted-foreground mt-1">Based on 7-day rolling average</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Last 7-Day Usage</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <AreaChart data={config.sparklineData}>
+                  <defs>
+                    <linearGradient id={`panelGrad-${type}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={config.color} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={config.color} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
+                    formatter={(value: number) => [value.toLocaleString(), "Credits Used"]}
+                  />
+                  <Area type="monotone" dataKey="credits" stroke={config.color} strokeWidth={2} fill={`url(#panelGrad-${type})`} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="pt-4 border-t border-border space-y-3">
+              <p className="text-xs text-muted-foreground">Last alert sent 3h ago</p>
+              <div className="flex gap-3">
+                <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Alert Escalated", description: `${config.name} alert sent to finance team.` })}>
+                  <Bell className="h-4 w-4 mr-1" />
+                  Escalate Alert
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  Open Refill Portal
+                </Button>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   if (type === "anthropic") {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto">
+        <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
           <SheetHeader className="pb-4 border-b border-border">
             <SheetTitle className="flex items-center gap-2 text-foreground">
               <div className="h-8 w-8 rounded-lg bg-anthropic-muted flex items-center justify-center">
@@ -137,7 +284,7 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto">
+        <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
         <SheetHeader className="pb-4 border-b border-border">
           <SheetTitle className="flex items-center gap-2 text-foreground">
             <div className="h-8 w-8 rounded-lg bg-aws-muted flex items-center justify-center">
