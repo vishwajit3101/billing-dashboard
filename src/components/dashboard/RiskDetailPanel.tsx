@@ -1,4 +1,11 @@
-import { ExternalLink, Bell, Calendar, DollarSign, ArrowUpRight, Server } from "lucide-react";
+import {
+  ExternalLink,
+  Bell,
+  Calendar,
+  DollarSign,
+  ArrowUpRight,
+  Server,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -124,7 +131,11 @@ const awsServices = [
   { service: "Other", cost: 1200 },
 ];
 
-export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelProps) {
+export function RiskDetailPanel({
+  open,
+  onOpenChange,
+  type,
+}: RiskDetailPanelProps) {
   // Tool card panels (tavily, fullenrich, buyercaddy)
   if (type !== "anthropic" && type !== "aws") {
     const config = toolConfigs[type];
@@ -133,8 +144,16 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
         <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
           <SheetHeader className="pb-4 border-b border-border">
             <SheetTitle className="flex items-center gap-2 text-foreground">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${config.color}20` }}>
-                <span className="text-sm font-bold" style={{ color: config.color }}>{config.name.charAt(0)}</span>
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${config.color}20` }}
+              >
+                <span
+                  className="text-sm font-bold"
+                  style={{ color: config.color }}
+                >
+                  {config.name.charAt(0)}
+                </span>
               </div>
               {config.name} Risk Details
             </SheetTitle>
@@ -144,53 +163,120 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
           <div className="space-y-6 pt-6 max-w-full">
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">Credits Remaining</p>
-                <p className="text-2xl font-bold text-foreground">{config.creditsRemaining.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Credits Remaining
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {config.creditsRemaining.toLocaleString()}
+                </p>
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">Avg Daily Usage</p>
-                <p className="text-2xl font-bold text-foreground">{config.avgDaily.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Avg Daily Usage
+                </p>
+                <p className="text-2xl font-bold text-foreground">
+                  {config.avgDaily.toLocaleString()}
+                </p>
               </div>
             </div>
 
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="h-4 w-4 text-destructive" />
-                <p className="text-xs font-medium text-destructive">Predicted Exhaustion</p>
+                <p className="text-xs font-medium text-destructive">
+                  Predicted Exhaustion
+                </p>
               </div>
-              <p className="text-xl font-bold text-destructive">{config.exhaustionDate}</p>
-              <p className="text-xs text-muted-foreground mt-1">Based on 7-day rolling average</p>
+              <p className="text-xl font-bold text-destructive">
+                {config.exhaustionDate}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on 7-day rolling average
+              </p>
             </div>
 
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Last 7-Day Usage</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                Last 7-Day Usage
+              </p>
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={config.sparklineData}>
                   <defs>
-                    <linearGradient id={`panelGrad-${type}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={config.color} stopOpacity={0.3} />
-                      <stop offset="100%" stopColor={config.color} stopOpacity={0} />
+                    <linearGradient
+                      id={`panelGrad-${type}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor={config.color}
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={config.color}
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fontSize: 10,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                  />
                   <YAxis hide />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
-                    formatter={(value: number) => [value.toLocaleString(), "Credits Used"]}
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                    }}
+                    formatter={(value: number) => [
+                      value.toLocaleString(),
+                      "Credits Used",
+                    ]}
                   />
-                  <Area type="monotone" dataKey="credits" stroke={config.color} strokeWidth={2} fill={`url(#panelGrad-${type})`} />
+                  <Area
+                    type="monotone"
+                    dataKey="credits"
+                    stroke={config.color}
+                    strokeWidth={2}
+                    fill={`url(#panelGrad-${type})`}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             <div className="pt-4 border-t border-border space-y-3">
-              <p className="text-xs text-muted-foreground">Last alert sent 3h ago</p>
+              <p className="text-xs text-muted-foreground">
+                Last alert sent 3h ago
+              </p>
               <div className="flex gap-3">
-                <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Alert Escalated", description: `${config.name} alert sent to finance team.` })}>
+                <Button
+                  size="sm"
+                  className="flex-1 cursor-pointer"
+                  onClick={() =>
+                    toast({
+                      title: "Alert Escalated",
+                      description: `${config.name} alert sent to finance team.`,
+                    })
+                  }
+                >
                   <Bell className="h-4 w-4 mr-1" />
                   Escalate Alert
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 cursor-pointer"
+                >
                   <ExternalLink className="h-4 w-4 mr-1" />
                   Open Refill Portal
                 </Button>
@@ -213,18 +299,24 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
               </div>
               Anthropic Risk Details
             </SheetTitle>
-            <SheetDescription>Claude API credit monitoring & predictions</SheetDescription>
+            <SheetDescription>
+              Claude API credit monitoring & predictions
+            </SheetDescription>
           </SheetHeader>
 
           <div className="space-y-6 pt-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">Credits Remaining</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Credits Remaining
+                </p>
                 <p className="text-2xl font-bold text-foreground">42,350</p>
               </div>
               <div className="rounded-lg border border-border p-3">
-                <p className="text-xs text-muted-foreground mb-1">Avg Daily Usage</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Avg Daily Usage
+                </p>
                 <p className="text-2xl font-bold text-foreground">15,420</p>
               </div>
             </div>
@@ -232,10 +324,16 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Calendar className="h-4 w-4 text-destructive" />
-                <p className="text-xs font-medium text-destructive">Predicted Exhaustion</p>
+                <p className="text-xs font-medium text-destructive">
+                  Predicted Exhaustion
+                </p>
               </div>
-              <p className="text-xl font-bold text-destructive">February 6, 2026</p>
-              <p className="text-xs text-muted-foreground mt-1">Based on 7-day rolling average</p>
+              <p className="text-xl font-bold text-destructive">
+                February 6, 2026
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Based on 7-day rolling average
+              </p>
             </div>
 
             {/* 7-day Chart */}
@@ -246,31 +344,82 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={anthropicUsage}>
                   <defs>
-                    <linearGradient id="panelAnthropicGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--anthropic))" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(var(--anthropic))" stopOpacity={0} />
+                    <linearGradient
+                      id="panelAnthropicGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="hsl(var(--anthropic))"
+                        stopOpacity={0.3}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="hsl(var(--anthropic))"
+                        stopOpacity={0}
+                      />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fontSize: 10,
+                      fill: "hsl(var(--muted-foreground))",
+                    }}
+                  />
                   <YAxis hide />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
-                    formatter={(value: number) => [value.toLocaleString(), "Credits Used"]}
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                    }}
+                    formatter={(value: number) => [
+                      value.toLocaleString(),
+                      "Credits Used",
+                    ]}
                   />
-                  <Area type="monotone" dataKey="credits" stroke="hsl(var(--anthropic))" strokeWidth={2} fill="url(#panelAnthropicGrad)" />
+                  <Area
+                    type="monotone"
+                    dataKey="credits"
+                    stroke="hsl(var(--anthropic))"
+                    strokeWidth={2}
+                    fill="url(#panelAnthropicGrad)"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
             {/* Unified Action Footer */}
             <div className="pt-4 border-t border-border space-y-3">
-              <p className="text-xs text-muted-foreground">Last alert sent 2h ago</p>
+              <p className="text-xs text-muted-foreground">
+                Last alert sent 2h ago
+              </p>
               <div className="flex gap-3">
-                <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Alert Escalated", description: "Finance team has been notified." })}>
+                <Button
+                  size="sm"
+                  className="flex-1 cursor-pointer"
+                  onClick={() =>
+                    toast({
+                      title: "Alert Escalated",
+                      description: "Finance team has been notified.",
+                    })
+                  }
+                >
                   <Bell className="h-4 w-4 mr-1" />
                   Escalate Alert
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 cursor-pointer"
+                >
                   <ExternalLink className="h-4 w-4 mr-1" />
                   Open Refill Portal
                 </Button>
@@ -284,7 +433,7 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
+      <SheetContent className="w-[420px] sm:max-w-[420px] overflow-y-auto overflow-x-hidden">
         <SheetHeader className="pb-4 border-b border-border">
           <SheetTitle className="flex items-center gap-2 text-foreground">
             <div className="h-8 w-8 rounded-lg bg-aws-muted flex items-center justify-center">
@@ -292,14 +441,18 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
             </div>
             AWS Risk Details
           </SheetTitle>
-          <SheetDescription>Cloud infrastructure cost analysis</SheetDescription>
+          <SheetDescription>
+            Cloud infrastructure cost analysis
+          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 pt-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg border border-border p-3">
-              <p className="text-xs text-muted-foreground mb-1">Current Spend</p>
+              <p className="text-xs text-muted-foreground mb-1">
+                Current Spend
+              </p>
               <p className="text-2xl font-bold text-destructive">$14,100</p>
             </div>
             <div className="rounded-lg border border-border p-3">
@@ -311,10 +464,14 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
             <div className="flex items-center gap-2 mb-1">
               <ArrowUpRight className="h-4 w-4 text-destructive" />
-              <p className="text-xs font-medium text-destructive">Weekly Increase</p>
+              <p className="text-xs font-medium text-destructive">
+                Weekly Increase
+              </p>
             </div>
             <p className="text-xl font-bold text-destructive">+18.2%</p>
-            <p className="text-xs text-muted-foreground mt-1">Compared to previous week</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Compared to previous week
+            </p>
           </div>
 
           {/* Monthly Spend Chart */}
@@ -324,13 +481,32 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
             </p>
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={awsMonthly}>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                />
                 <YAxis hide />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, "Spend"]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "11px",
+                  }}
+                  formatter={(value: number) => [
+                    `$${value.toLocaleString()}`,
+                    "Spend",
+                  ]}
                 />
-                <Line type="monotone" dataKey="spend" stroke="hsl(var(--aws))" strokeWidth={2} dot={{ fill: "hsl(var(--aws))", strokeWidth: 0, r: 3 }} />
+                <Line
+                  type="monotone"
+                  dataKey="spend"
+                  stroke="hsl(var(--aws))"
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--aws))", strokeWidth: 0, r: 3 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -343,26 +519,60 @@ export function RiskDetailPanel({ open, onOpenChange, type }: RiskDetailPanelPro
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={awsServices} layout="vertical" barSize={12}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="service" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} width={50} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "11px" }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, "Cost"]}
+                <YAxis
+                  type="category"
+                  dataKey="service"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }}
+                  width={50}
                 />
-                <Bar dataKey="cost" fill="hsl(var(--aws))" radius={[0, 4, 4, 0]} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    fontSize: "11px",
+                  }}
+                  formatter={(value: number) => [
+                    `$${value.toLocaleString()}`,
+                    "Cost",
+                  ]}
+                />
+                <Bar
+                  dataKey="cost"
+                  fill="hsl(var(--aws))"
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Unified Action Footer */}
           <div className="pt-4 border-t border-border space-y-3">
-            <p className="text-xs text-muted-foreground">Last alert sent 4h ago</p>
+            <p className="text-xs text-muted-foreground">
+              Last alert sent 4h ago
+            </p>
             <div className="flex gap-3">
-              <Button size="sm" className="flex-1 cursor-pointer" onClick={() => toast({ title: "Cost Breakdown", description: "Opening detailed cost analysis." })}>
-                <DollarSign className="h-4 w-4 mr-1" />
+              <Button
+                size="sm"
+                className="flex-1 cursor-pointer"
+                onClick={() =>
+                  toast({
+                    title: "Cost Breakdown",
+                    description: "Opening detailed cost analysis.",
+                  })
+                }
+              >
+                <DollarSign className="h-4 w-4" />
                 View Cost Breakdown
               </Button>
-              <Button variant="outline" size="sm" className="flex-1 cursor-pointer">
-                <ExternalLink className="h-4 w-4 mr-1" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 cursor-pointer"
+              >
+                <ExternalLink className="h-4 w-4" />
                 Open AWS Console
               </Button>
             </div>
