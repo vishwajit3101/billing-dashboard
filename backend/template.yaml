@@ -1,0 +1,224 @@
+# AWS SAM template — Operator.ai Billing Dashboard Backend
+# Deploy: sam build && sam deploy
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Billing Watch Backend — Lambda, API Gateway, RDS, Secrets Manager, SES, EventBridge
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+  DBSecretArn:
+    Type: String
+    Description: ARN of Secrets Manager secret holding RDS credentials
+  AlertEmail:
+    Type: String
+    Description: Email address for billing alerts (SES)
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 60
+    MemorySize: 256
+    Architectures:
+      - x86_64
+
+Resources:
+  # --- API Gateway ---
+  BillingApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub billing-watch-${Environment}
+      StageName: !Ref Environment
+      Cors:
+        AllowMethods: "'GET,OPTIONS'"
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-Type,Authorization'"
+
+  # --- Dashboard API ---
+  ApiDashboard:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.api.dashboard.handler
+      Events:
+        GetDashboard:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/dashboard
+            Method: GET
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  ApiExport:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.api.export.handler
+      Events:
+        GetExport:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/export
+            Method: GET
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  ApiTools:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.api.tools.handler
+      Events:
+        GetTools:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/tools
+            Method: GET
+        GetToolDetail:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/tools/{slug}
+            Method: GET
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  ApiHealth:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.api.health.handler
+      Events:
+        GetHealth:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/health
+            Method: GET
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  # --- Hourly jobs (EventBridge) ---
+  FetchBillingSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 hour)"
+      State: ENABLED
+      Targets:
+        - Id: FetchBilling
+          Arn: !GetAtt FetchBilling.Arn
+
+  FetchBillingSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FetchBilling
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${FetchBillingSchedule}"
+
+  FetchBilling:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.jobs.fetch_billing.handler
+      Events: {}
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  FetchPostHogSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 hour)"
+      State: ENABLED
+      Targets:
+        - Id: FetchPostHog
+          Arn: !GetAtt FetchPostHog.Arn
+
+  FetchPostHogSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FetchPostHog
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${FetchPostHogSchedule}"
+
+  FetchPostHog:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.jobs.fetch_posthog.handler
+      Events: {}
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  ComputeUsageSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 hour)"
+      State: ENABLED
+      Targets:
+        - Id: ComputeUsage
+          Arn: !GetAtt ComputeUsage.Arn
+
+  ComputeUsageSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ComputeUsage
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ComputeUsageSchedule}"
+
+  ComputeUsage:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.jobs.compute_usage.handler
+      Events: {}
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
+  CheckAlertsSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: "rate(1 hour)"
+      State: ENABLED
+      Targets:
+        - Id: CheckAlerts
+          Arn: !GetAtt CheckAlerts.Arn
+
+  CheckAlertsSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref CheckAlerts
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${CheckAlertsSchedule}"
+
+  CheckAlerts:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src.jobs.check_alerts.handler
+      Events: {}
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+          ALERT_EMAIL: !Ref AlertEmail
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the Billing API
+    Value: !Sub "https://${BillingApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"

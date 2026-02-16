@@ -1,0 +1,7 @@
+# Billing fetcher Lambda — Python 3.11+
+# boto3 for Secrets Manager (and Lambda runtime)
+boto3>=1.34.0
+# HTTP requests with retries
+requests>=2.31.0
+# RDS PostgreSQL
+psycopg2-binary>=2.9.9
