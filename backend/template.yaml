@@ -106,6 +106,47 @@ Resources:
         Variables:
           DB_SECRET_ARN: !Ref DBSecretArn
 
+  # --- Dashboard API (single Lambda, all dashboard endpoints) ---
+  DashboardApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: lambda_functions.dashboard_api.handler.handler
+      Events:
+        GetTools:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/tools
+            Method: GET
+        GetToolTrend:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/tools/{tool_id}/trend
+            Method: GET
+        GetAwsSpend:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/aws/spend
+            Method: GET
+        GetAlerts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/alerts
+            Method: GET
+        GetExport:
+          Type: Api
+          Properties:
+            RestApiId: !Ref BillingApi
+            Path: /api/export
+            Method: GET
+      Environment:
+        Variables:
+          DB_SECRET_ARN: !Ref DBSecretArn
+
   # --- Hourly jobs (EventBridge) ---
   FetchBillingSchedule:
     Type: AWS::Events::Rule

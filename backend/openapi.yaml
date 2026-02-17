@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Operator.ai Billing Dashboard API
+  description: REST API for the billing dashboard frontend (tools, AWS spend, alerts, export).
+  version: 1.0.0
+
+servers:
+  - url: https://{apiId}.execute-api.{region}.amazonaws.com/{stage}
+    variables:
+      apiId: {}
+      region: {}
+      stage: dev
+
+paths:
+  /api/tools:
+    get:
+      summary: List all tools
+      description: Returns all AI tools with current credits, risk level, exhaustion date, avg daily usage, cost this month.
+      operationId: getTools
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tool'
+                  meta:
+                    type: object
+                    properties:
+                      count: { type: integer }
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    options:
+      summary: CORS preflight
+      responses:
+        '204':
+          description: No content
+
+  /api/tools/{tool_id}/trend:
+    get:
+      summary: Tool usage trend
+      description: Returns daily usage trend for the specified tool over the given number of days.
+      operationId: getToolTrend
+      parameters:
+        - name: tool_id
+          in: path
+          required: true
+          schema: { type: string }
+          example: anthropic
+        - name: days
+          in: query
+          schema: { type: integer, default: 7, minimum: 1, maximum: 90 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tool_id: { type: string }
+                  days: { type: integer }
+                  trend:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date: { type: string, format: date }
+                        value: { type: number }
+                  meta:
+                    type: object
+                    properties:
+                      from: { type: string, format: date }
+                      to: { type: string, format: date }
+        '400':
+          description: Bad request (missing tool_id)
+        '404':
+          description: Tool not found
+        '500':
+          description: Server error
+    options:
+      summary: CORS preflight
+      responses:
+        '204':
+          description: No content
+
+  /api/aws/spend:
+    get:
+      summary: AWS monthly spend
+      description: Returns current month spend, budget, percent of budget, change %, cost by service, monthly trend.
+      operationId: getAwsSpend
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current_spend_usd: { type: number }
+                  budget_usd: { type: number }
+                  percent_of_budget: { type: number }
+                  change_percent: { type: number }
+                  status: { type: string, enum: [healthy, warning, critical] }
+                  cost_by_service:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        service: { type: string }
+                        cost_usd: { type: number }
+                  monthly_trend:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month: { type: string }
+                        spend_usd: { type: number }
+                  meta:
+                    type: object
+                    properties:
+                      period_start: { type: string, format: date }
+                      period_end: { type: string, format: date }
+        '500':
+          description: Server error
+    options:
+      summary: CORS preflight
+      responses:
+        '204':
+          description: No content
+
+  /api/alerts:
+    get:
+      summary: Active alerts
+      description: Returns active (recent) alerts with type, message, tool_id, triggered_at.
+      operationId: getAlerts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+                  meta:
+                    type: object
+                    properties:
+                      count: { type: integer }
+        '500':
+          description: Server error
+    options:
+      summary: CORS preflight
+      responses:
+        '204':
+          description: No content
+
+  /api/export:
+    get:
+      summary: Export report
+      description: Returns report data as CSV or JSON attachment for the given range.
+      operationId: getExport
+      parameters:
+        - name: range
+          in: query
+          schema: { type: string, enum: [7d, 30d], default: 30d }
+        - name: format
+          in: query
+          schema: { type: string, enum: [csv, json], default: csv }
+      responses:
+        '200':
+          description: OK
+          content:
+            text/csv:
+              schema:
+                type: string
+                description: CSV file (Content-Disposition attachment)
+            application/json:
+              schema:
+                type: object
+                description: JSON report (Content-Disposition attachment)
+        '500':
+          description: Server error
+      headers:
+        Content-Disposition:
+          description: attachment; filename="billing-report-{range}.{format}"
+    options:
+      summary: CORS preflight
+      responses:
+        '204':
+          description: No content
+
+components:
+  schemas:
+    Tool:
+      type: object
+      properties:
+        tool_id: { type: string }
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        credits_remaining: { type: integer }
+        credits_total: { type: integer, nullable: true }
+        percent_remaining: { type: number }
+        risk_level: { type: string, enum: [safe, warning, critical] }
+        exhaustion_date: { type: string, nullable: true }
+        avg_daily_usage: { type: number }
+        cost_this_month_usd: { type: number }
+    Alert:
+      type: object
+      properties:
+        id: { type: integer }
+        tool_id: { type: string, nullable: true }
+        tool_name: { type: string, nullable: true }
+        alert_type: { type: string }
+        message: { type: string }
+        threshold: { type: number, nullable: true }
+        triggered_at: { type: string, format: date-time }
+        payload: { type: object }
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }

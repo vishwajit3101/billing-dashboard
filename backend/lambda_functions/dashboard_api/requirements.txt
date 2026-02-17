@@ -1,0 +1,3 @@
+# Dashboard API Lambda — minimal deps; shared code uses backend src/
+psycopg2-binary>=2.9.0
+# boto3 is provided by Lambda runtime for Secrets Manager

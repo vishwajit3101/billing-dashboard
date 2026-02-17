@@ -40,7 +40,7 @@ def _get_db_params() -> dict:
                 "port": int(s.get("port", os.environ.get("DB_PORT", "5432"))),
                 "dbname": s.get("dbname", s.get("database", os.environ.get("DB_NAME", "billing_watch"))),
                 "user": s.get("username", s.get("user", os.environ.get("DB_USER", "postgres"))),
-                "password": s.get("password", os.environ.get("DB_PASSWORD", ""))),
+                "password": s.get("password", os.environ.get("DB_PASSWORD", "")),
             }
         except Exception as e:
             logger.warning("Secrets Manager failed, using env: %s", e)
