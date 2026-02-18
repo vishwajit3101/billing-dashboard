@@ -1,7 +1,0 @@
-# PostHog processor Lambda — Python 3.11+
-# PostHog Query API (HogQL)
-requests>=2.31.0
-# RDS
-psycopg2-binary>=2.9.9
-# Secrets Manager (optional, for DB credentials)
-boto3>=1.34.0
