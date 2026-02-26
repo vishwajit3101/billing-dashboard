@@ -43,12 +43,12 @@ interface AnthropicCardProps {
 export function AnthropicCard({ data, onRiskClick }: AnthropicCardProps) {
   const creditsRemaining = data?.credits_remaining ?? 0;
   const percentRemaining = data?.percent_remaining ?? 0;
-  const status = data?.status ?? "healthy";
+  const status = data?.status ?? "Safe";
   const dailyAvg = data?.daily_avg_usage ?? 0;
   const exhaustion = data?.predicted_exhaustion ?? "N/A";
 
-  const isLow = status === "critical";
-  const isWarning = status === "at_risk";
+  const isCritical = status.toLowerCase() === "critical";
+  const isWarning = status.toLowerCase() === "warning";
 
   return (
     <div className="relative flex flex-col rounded-lg border border-border bg-card p-4 card-shadow h-full overflow-hidden">
@@ -67,9 +67,9 @@ export function AnthropicCard({ data, onRiskClick }: AnthropicCardProps) {
           <UITooltip>
             <TooltipTrigger asChild>
               <button onClick={onRiskClick} className="cursor-pointer">
-                {isLow && <StatusBadge status="critical" label="Credits Critical" />}
+                {isCritical && <StatusBadge status="critical" label="Credits Critical" />}
                 {isWarning && <StatusBadge status="warning" label="Credits Low" />}
-                {!isLow && !isWarning && <StatusBadge status="healthy" label="Healthy" />}
+                {!isCritical && !isWarning && <StatusBadge status="safe" label="Safe" />}
               </button>
             </TooltipTrigger>
             <TooltipContent>Click to view risk details</TooltipContent>
@@ -111,7 +111,7 @@ export function AnthropicCard({ data, onRiskClick }: AnthropicCardProps) {
           Daily Usage Trend
         </p>
         <ResponsiveContainer width="100%" height="85%">
-          <AreaChart data={usageData}>
+          <AreaChart data={data?.history && data.history.length > 0 ? data.history.map((h, i) => ({ day: h.day, credits: h.credits })) : usageData}>
             <defs>
               <linearGradient id="anthropicGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="hsl(var(--anthropic))" stopOpacity={0.3} />
@@ -160,7 +160,7 @@ export function AnthropicCard({ data, onRiskClick }: AnthropicCardProps) {
             <Calendar className="h-3 w-3" />
             <span className="text-[10px]">Exhaustion</span>
           </div>
-          <p className={cn("text-sm font-semibold", isLow ? "text-destructive" : "text-foreground")}>
+          <p className={cn("text-sm font-semibold", isCritical ? "text-destructive" : "text-foreground")}>
             {exhaustion}
           </p>
         </div>

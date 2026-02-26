@@ -1,30 +1,35 @@
-# Billing Watch — Project structure checklist
+# Billing Watch — Project Structure
 
-Use this to verify all expected files exist. Paths are relative to the repo root.
+This file provides an overview of the actual project structure as of February 2026.
 
-| Expected path | Exists | Actual path |
-|---------------|--------|-------------|
-| **.env.example** | ✓ | `backend/.env.example` |
-| **config.py** | ✓ | `backend/config.py` |
-| **requirements.txt** | ✓ | `backend/requirements.txt` |
-| **README.md** | ✓ | `backend/README.md` (also `README.md` at root) |
-| **schema/init_db.sql** | ✓ | `backend/schema/init_db.sql` |
-| **scripts/init_database.py** | ✓ | `backend/scripts/init_database.py` |
-| **scripts/deploy.sh** | ✓ | `scripts/deploy.sh` |
-| **scripts/package_lambdas.sh** | ✓ | `scripts/package_lambdas.sh` |
-| **lambda_functions/billing_fetcher/** | ✓ | `backend/lambda_functions/billing_fetcher/` |
-| **lambda_functions/posthog_processor/** | ✓ | `backend/lambda_functions/posthog_processor/` |
-| **lambda_functions/risk_calculator/** | ✓ | `backend/lambda_functions/risk_calculator/` |
-| **lambda_functions/alert_engine/** | ✓ | `backend/lambda_functions/alert_engine/` |
-| **lambda_functions/dashboard_api/** | ✓ | `backend/lambda_functions/dashboard_api/` |
-| **tests/test_billing_fetcher.py** | ✓ | `backend/tests/test_billing_fetcher.py` |
-| **tests/test_posthog_processor.py** | ✓ | `backend/tests/test_posthog_processor.py` |
-| **tests/test_risk_calculator.py** | ✓ | `backend/tests/test_risk_calculator.py` |
-| **tests/test_alert_engine.py** | ✓ | `backend/tests/test_alert_engine.py` |
-| **tests/test_api.py** | ✓ | `backend/tests/test_api.py` |
-| **tests/local_simulation.py** | ✓ | `backend/tests/local_simulation.py` |
-| **infrastructure/main.tf** | ✓ | `infrastructure/main.tf` |
-| **infrastructure/variables.tf** | ✓ | `infrastructure/variables.tf` |
-| **infrastructure/outputs.tf** | ✓ | `infrastructure/outputs.tf` |
+## Repo Root
+- `backend/`: FastAPI backend and Lambda logic.
+- `frontend/`: React dashboard frontend.
+- `src/`: Shared frontend source code (standard Vite structure).
+- `STRUCTURE.md`: This file.
 
-**Note:** The Python backend (config, schema, lambda_functions, tests) lives under `backend/`. Scripts at repo root (`scripts/`) are for deployment; `backend/scripts/` has DB init. Run tests from `backend/`: `python -m pytest tests/ -v`. Run local pipeline: `python tests/local_simulation.py` from `backend/`.
+## Backend Structure (`backend/`)
+The backend is a consolidated FastAPI application designed to run on AWS Lambda.
+
+- `app/`: Main application logic.
+  - `main.py`: FastAPI entry point and dashboard API.
+  - `lambda_handler.py`: Entry point for hourly data fetching tasks.
+  - `posthog.py`: Integration with PostHog for real usage data.
+  - `anthropic.py`, `aws_cost.py`, `tavily.py`, etc.: Tool-specific API integrations.
+  - `calculations.py`: Risk scoring and alert generation logic.
+  - `database.py`: PostgreSQL connection management.
+- `requirements.txt`: Python dependencies.
+- `.env`: Environment variables (API keys, DB credentials).
+- `seed_mock.py`: Utility script to seed the database with mock tools.
+- `create_tables.py`: Utility script to initialize database tables.
+
+## Frontend Structure
+The frontend is a modern React application using Vite and Tailwind CSS.
+- `src/components/dashboard/`: Core dashboard UI components (`AnthropicCard`, `AWSCard`, `ToolCard`, etc.).
+- `src/hooks/`: Custom React hooks like `useDashboard`.
+- `src/lib/`: API client and utility logic.
+
+## Deployment & Infrastructure
+- Infrastructure code (Terraform) is located in `infrastructure/`.
+- Deployment scripts are located in `scripts/`.
+- Automated EventBridge scheduler setup is identified as a future improvement.

@@ -1,6 +1,6 @@
 // billing-dashboard/src/lib/api.ts
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
 export interface ToolData {
     name: string;
@@ -8,7 +8,8 @@ export interface ToolData {
     percent_remaining: number;
     daily_avg_usage: number;
     predicted_exhaustion: string | null;
-    status: "healthy" | "at_risk" | "critical";
+    status: string;
+    history?: { day: string, credits: number }[];
 }
 
 export interface AWSService {
@@ -27,7 +28,7 @@ export interface AWSData {
 }
 
 export interface Alert {
-    severity: "critical" | "warning" | "info";
+    severity: string;
     message: string;
     affected: string;
 }

@@ -51,20 +51,21 @@ export function ToolCard({
   const config = toolConfig[tool];
   const creditsRemaining = data?.credits_remaining ?? 0;
   const percentRemaining = data?.percent_remaining ?? 100;
-  const status = data?.status ?? "healthy";
+  const status = data?.status ?? "Safe";
+  const exhaustionDate = data?.predicted_exhaustion;
 
-  const isLow = status === "critical";
-  const isWarning = status === "at_risk";
+  const isCritical = status.toLowerCase() === "critical";
+  const isWarning = status.toLowerCase() === "warning";
 
   const pieData = [
     { name: "Used", value: 100 - percentRemaining },
     { name: "Remaining", value: percentRemaining },
   ];
 
-  const sparkData = sparklineData.map((value, index) => ({
-    index,
-    value,
-  }));
+  // Use real history if available, otherwise fallback to index-based mapping
+  const sparkData = data?.history && data.history.length > 0
+    ? data.history.map((h, i) => ({ index: i, value: h.credits }))
+    : sparklineData.map((value, index) => ({ index, value }));
 
   return (
     <div
@@ -72,11 +73,11 @@ export function ToolCard({
       onClick={onClick}
     >
       {/* Alert Indicator */}
-      {(isLow || isWarning) && (
+      {(isCritical || isWarning) && (
         <div
           className={cn(
             "absolute top-3 right-3 h-2 w-2 rounded-full",
-            isLow ? "bg-destructive animate-pulse-slow" : "bg-warning"
+            isCritical ? "bg-destructive animate-pulse-slow" : "bg-warning"
           )}
         />
       )}
@@ -133,7 +134,17 @@ export function ToolCard({
           <p className="text-lg font-bold text-foreground">
             {creditsRemaining.toLocaleString()}
           </p>
-          <p className="text-[10px] text-muted-foreground">credits left</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-[10px] text-muted-foreground whitespace-nowrap">credits left</p>
+            {exhaustionDate && (
+              <>
+                <span className="text-[8px] text-muted-foreground">•</span>
+                <p className="text-[9px] font-medium text-warning whitespace-nowrap">
+                  Exhausts: {new Date(exhaustionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

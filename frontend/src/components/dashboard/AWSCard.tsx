@@ -73,7 +73,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
           ) : weeklyChange > 15 ? (
             <StatusBadge status="warning" label="Spend Spike" />
           ) : (
-            <StatusBadge status="healthy" label="On Track" />
+            <StatusBadge status="safe" label="On Track" />
           )}
         </div>
       </div>

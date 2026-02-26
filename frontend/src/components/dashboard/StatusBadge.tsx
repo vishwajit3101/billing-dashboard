@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils";
 import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 
-type StatusType = "critical" | "warning" | "healthy";
+type StatusType = "Critical" | "Warning" | "Safe";
 
 interface StatusBadgeProps {
-  status: StatusType;
+  status: string; // Keep string for loose matching if needed
   label: string;
   className?: string;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, any> = {
   critical: {
     icon: AlertCircle,
     bgClass: "bg-destructive/10",
@@ -22,7 +22,7 @@ const statusConfig = {
     textClass: "text-warning",
     iconClass: "text-warning",
   },
-  healthy: {
+  safe: {
     icon: CheckCircle,
     bgClass: "bg-success/10",
     textClass: "text-success",
@@ -31,7 +31,7 @@ const statusConfig = {
 };
 
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {
-  const config = statusConfig[status];
+  const config = statusConfig[status.toLowerCase()] || statusConfig.safe;
   const Icon = config.icon;
 
   return (
