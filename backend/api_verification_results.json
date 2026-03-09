@@ -1,0 +1,22 @@
+{
+  "Tavily": {
+    "remaining": 1000.0,
+    "total": 1000.0,
+    "status": "Success"
+  },
+  "FullEnrich": {
+    "remaining": 50.0,
+    "total": 100.0,
+    "status": "Success"
+  },
+  "Anthropic": {
+    "remaining": 0.0,
+    "total": 1000.0,
+    "status": "Success"
+  },
+  "BuyerCaddy": {
+    "remaining": 6800.0,
+    "total": 10000.0,
+    "status": "Success"
+  }
+}

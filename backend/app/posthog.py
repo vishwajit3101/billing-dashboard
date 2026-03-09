@@ -100,16 +100,29 @@ def get_tool_usage_history(days: int = 7) -> dict[str, list[dict]]:
 
     for tool, credits_per, fut in tasks:
         daily_counts = fut.result()
-        tool_history = [
-            {"day": d["day"], "credits": d["count"] * credits_per}
-            for d in daily_counts
-        ]
+        # Sort counts by day to ensure correct relative labeling
+        sorted_counts = sorted(daily_counts, key=lambda x: x["day"])
+        
+        tool_history = []
+        for i, d in enumerate(sorted_counts):
+            # Calculate relative label
+            days_ago = len(sorted_counts) - 1 - i
+            if days_ago == 0:
+                label = "Today"
+            elif days_ago == 1:
+                label = "Yesterday"
+            else:
+                label = f"{days_ago}d ago"
+                
+            tool_history.append({
+                "day": d["day"],
+                "label": label,
+                "credits": d["count"] * credits_per
+            })
         
         if tool not in history:
             history[tool] = tool_history
         else:
-            # Merge if multiple events map to same tool (not the case now, but for safety)
-            # This is a bit simplified; real merge would need to align days
             history[tool] = tool_history
 
     return history

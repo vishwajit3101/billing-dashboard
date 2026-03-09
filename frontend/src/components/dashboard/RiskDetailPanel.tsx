@@ -152,15 +152,20 @@ export function RiskDetailPanel({
     const exhaustionDate = realData?.predicted_exhaustion ?? config.exhaustionDate;
 
     // Generate simple trend based on avgDaily if real history is unavailable
-    const trendData = realData ? [
-      { day: "6d ago", credits: avgDaily * 0.8 },
-      { day: "5d ago", credits: avgDaily * 1.2 },
-      { day: "4d ago", credits: avgDaily * 0.9 },
-      { day: "3d ago", credits: avgDaily * 1.1 },
-      { day: "2d ago", credits: avgDaily * 1.0 },
-      { day: "Yesterday", credits: avgDaily * 1.3 },
-      { day: "Today", credits: avgDaily }
-    ] : config.sparklineData;
+    const trendData = realData?.history && realData.history.length > 0
+      ? realData.history.map(h => ({
+        day: (h as any).label || (h as any).day,
+        credits: (h as any).credits ?? (h as any).credits_used
+      }))
+      : realData ? [
+        { day: "6d ago", credits: avgDaily * 0.8 },
+        { day: "5d ago", credits: avgDaily * 1.2 },
+        { day: "4d ago", credits: avgDaily * 0.9 },
+        { day: "3d ago", credits: avgDaily * 1.1 },
+        { day: "2d ago", credits: avgDaily * 1.0 },
+        { day: "Yesterday", credits: avgDaily * 1.3 },
+        { day: "Today", credits: avgDaily }
+      ] : config.sparklineData;
 
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -317,15 +322,12 @@ export function RiskDetailPanel({
     const avgDaily = realData?.daily_avg_usage ?? 15420;
     const exhaustionDate = realData?.predicted_exhaustion ?? "February 6, 2026";
 
-    const trendData = realData ? [
-      { day: "6d ago", credits: avgDaily * 0.9 },
-      { day: "5d ago", credits: avgDaily * 1.1 },
-      { day: "4d ago", credits: avgDaily * 0.8 },
-      { day: "3d ago", credits: avgDaily * 1.2 },
-      { day: "2d ago", credits: avgDaily * 1.05 },
-      { day: "Yesterday", credits: avgDaily * 1.15 },
-      { day: "Today", credits: avgDaily }
-    ] : anthropicUsage;
+    const trendData = realData?.history && realData.history.length > 0
+      ? realData.history.slice(-7).map(h => ({
+        day: (h as any).label || h.day,
+        credits: h.credits
+      }))
+      : anthropicUsage;
 
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -474,11 +476,12 @@ export function RiskDetailPanel({
   }
 
   const awsData = dashboardData?.aws;
-  const currentSpend = awsData?.monthly_spend ?? 0;
-  const budget = awsData?.monthly_budget ?? 12000;
-  const percentUsed = awsData?.weekly_change ?? 0;
-  const serviceData = awsData?.services.map(s => ({ service: s.service, cost: s.amount })) ?? [];
-  const historyData = awsData?.history && awsData.history.length > 0 ? awsData.history : awsMonthly;
+  const currentSpend = awsData?.current_spend ?? 0;
+  const budget = awsData?.budget ?? 174.56;
+  const percentUsed = awsData?.budget_pct ?? 0;
+  const status = awsData?.status ?? "safe";
+  const monthlyTrend = awsData?.monthly_trend ?? awsMonthly;
+  const serviceData = awsData?.cost_by_service ?? awsServices;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -504,7 +507,7 @@ export function RiskDetailPanel({
               </p>
               <p className={cn(
                 "text-2xl font-bold",
-                currentSpend > budget ? "text-destructive" : "text-foreground"
+                status === "critical" ? "text-destructive" : "text-foreground"
               )}>
                 ${currentSpend.toLocaleString()}
               </p>
@@ -519,15 +522,15 @@ export function RiskDetailPanel({
 
           <div className={cn(
             "rounded-lg border p-3",
-            currentSpend > budget ? "border-destructive/30 bg-destructive/5" : "border-warning/30 bg-warning/5"
+            status === "critical" ? "border-destructive/30 bg-destructive/5" : status === "warning" ? "border-warning/30 bg-warning/5" : "border-emerald-500/30 bg-emerald-500/5"
           )}>
             <div className="flex items-center gap-2 mb-1">
-              <ArrowUpRight className={cn("h-4 w-4", currentSpend > budget ? "text-destructive" : "text-warning")} />
-              <p className={cn("text-xs font-medium", currentSpend > budget ? "text-destructive" : "text-warning")}>
+              <ArrowUpRight className={cn("h-4 w-4", status === "critical" ? "text-destructive" : status === "warning" ? "text-warning" : "text-emerald-500")} />
+              <p className={cn("text-xs font-medium", status === "critical" ? "text-destructive" : status === "warning" ? "text-warning" : "text-emerald-500")}>
                 Monthly Budget Usage
               </p>
             </div>
-            <p className={cn("text-xl font-bold", currentSpend > budget ? "text-destructive" : "text-warning")}>
+            <p className={cn("text-xl font-bold", status === "critical" ? "text-destructive" : status === "warning" ? "text-warning" : "text-emerald-500")}>
               {percentUsed}%
             </p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -541,9 +544,9 @@ export function RiskDetailPanel({
               Monthly Spend Trend
             </p>
             <ResponsiveContainer width="100%" height={140}>
-              <LineChart data={historyData}>
+              <LineChart data={monthlyTrend}>
                 <XAxis
-                  dataKey="month"
+                  dataKey="label"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
@@ -602,7 +605,7 @@ export function RiskDetailPanel({
                   ]}
                 />
                 <Bar
-                  dataKey="cost"
+                  dataKey="amount"
                   fill="hsl(var(--aws))"
                   radius={[0, 4, 4, 0]}
                 />

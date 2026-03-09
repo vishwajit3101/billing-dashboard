@@ -83,10 +83,10 @@ def generate_alerts(tools: list[dict], aws: dict) -> list[dict]:
         curr = tool.get("current_24h_usage", 0.0)
         if avg > 0.5 and curr >= 2 * avg:  # Threshold of 0.5 to avoid noise on very low usage
             alerts.append({
-                "type": "warning",
+                "type": "alert",
                 "message": f"Usage spike detected for {tool['name']} ({curr:.1f} vs avg {avg:.1f})",
                 "affected": tool["name"],
-                "severity": "warning"
+                "severity": "alert"
             })
 
     # AWS budget alert
@@ -103,10 +103,10 @@ def generate_alerts(tools: list[dict], aws: dict) -> list[dict]:
     aws_change = aws.get("weekly_change", 0.0)
     if aws_change >= 100.0:
         alerts.append({
-            "type": "warning",
+            "type": "alert",
             "message": f"AWS usage spike detected: {aws_change}% increase over last week",
             "affected": "AWS",
-            "severity": "warning"
+            "severity": "alert"
         })
 
     # Sort by severity (critical first)

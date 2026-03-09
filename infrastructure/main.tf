@@ -62,3 +62,23 @@ resource "aws_iam_role_policy" "lambda_policy" {
     ]
   })
 }
+# Trigger Lambda every hour
+resource "aws_cloudwatch_event_rule" "hourly_fetch" {
+  name                = "billing-watch-hourly-fetch"
+  description         = "Trigger billing data fetch every hour"
+  schedule_expression = "rate(1 hour)"
+}
+
+resource "aws_cloudwatch_event_target" "fetch_target" {
+  rule      = aws_cloudwatch_event_rule.hourly_fetch.name
+  target_id = "billing_fetcher"
+  arn       = aws_lambda_function.billing_fetcher.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.billing_fetcher.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.hourly_fetch.arn
+}

@@ -18,13 +18,14 @@ export interface AWSService {
 }
 
 export interface AWSData {
-    monthly_spend: number;
-    monthly_budget: number;
-    percent_used: number;
+    current_spend: number;
+    budget: number;
+    budget_pct: number;
     weekly_change?: number;
-    services: AWSService[];
+    monthly_trend: { month: string, label: string, spend: number }[];
+    cost_by_service: AWSService[];
+    status: string;
     filtered_days: number;
-    history?: { month: string, spend: number }[];
 }
 
 export interface Alert {

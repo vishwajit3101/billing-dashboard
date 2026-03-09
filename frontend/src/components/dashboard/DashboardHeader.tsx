@@ -12,10 +12,13 @@ interface DashboardHeaderProps {
   selectedRange: string;
   onRangeChange: (value: string) => void;
   onExport: () => void;
+  lastUpdated?: string;
 }
 
-export function DashboardHeader({ selectedRange, onRangeChange, onExport }: DashboardHeaderProps) {
-  const lastSynced = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+export function DashboardHeader({ selectedRange, onRangeChange, onExport, lastUpdated }: DashboardHeaderProps) {
+  const lastSynced = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
     <header className="flex items-center justify-between">

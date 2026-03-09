@@ -111,6 +111,34 @@ def lambda_handler(event, context):
         conn.commit()
         print("RDS updated successfully")
 
+        # 3. Generate Alerts and Send Email if Critical
+        # Re-fetch from DB for consistent alignment
+        cur.execute("SELECT name, credits_remaining, percent_remaining, daily_avg_usage, predicted_exhaustion, status FROM tools")
+        tool_rows = cur.fetchall()
+        tools_data = [{
+            "name": r[0], 
+            "credits_remaining": float(r[1]), 
+            "percent_remaining": float(r[2]),
+            "daily_avg_usage": float(r[3]),
+            "predicted_exhaustion": r[4],
+            "status": r[5]
+        } for r in tool_rows]
+
+        # Use mock-ish/placeholder for AWS in lambda for now since real AWS spend is complex to fully re-calc here
+        # but enough to trigger budget alerts
+        aws_summary = {
+            "percent_used": (total_aws / 12000.0 * 100),
+            "monthly_spend": total_aws
+        }
+
+        from app.calculations import generate_alerts
+        from app.notifications import send_alert_email
+        
+        alerts = generate_alerts(tools_data, aws_summary)
+        if any(a.get("severity") == "critical" for a in alerts):
+            print(f"[Lambda] Detected {len(alerts)} alerts, sending critical notification...")
+            send_alert_email(alerts)
+
     except Exception as e:
         print(f"Critical error in hourly fetch: {str(e)}")
         conn.rollback()

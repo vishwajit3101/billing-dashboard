@@ -1,0 +1,10 @@
+{
+  "host": "https://us.i.posthog.com",
+  "project_count": 1,
+  "projects": [
+    {
+      "id": 312837,
+      "name": "Default project"
+    }
+  ]
+}

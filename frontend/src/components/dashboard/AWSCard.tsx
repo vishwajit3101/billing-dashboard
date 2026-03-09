@@ -44,12 +44,13 @@ interface AWSCardProps {
 }
 
 export function AWSCard({ data, onRiskClick }: AWSCardProps) {
-  const currentSpend = data?.monthly_spend ?? 0;
-  const budget = data?.monthly_budget ?? 12000;
-  const percentOfBudget = data?.percent_used ?? 0;
+  const currentSpend = data?.current_spend ?? 0;
+  const budget = data?.budget ?? 174.56;
+  const percentOfBudget = data?.budget_pct ?? 0;
   const weeklyChange = data?.weekly_change ?? 0;
-  const isOverBudget = currentSpend > budget;
-  const serviceBreakdown = data?.services.map(s => ({ service: s.service, cost: s.amount })) ?? [];
+  const status = data?.status ?? "safe";
+  const monthlyTrend = data?.monthly_trend ?? monthlySpend;
+  const serviceBreakdown = data?.cost_by_service ?? [];
 
   return (
     <div
@@ -68,10 +69,10 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          {isOverBudget ? (
+          {status === "critical" ? (
             <StatusBadge status="critical" label="Over Budget" />
-          ) : weeklyChange > 15 ? (
-            <StatusBadge status="warning" label="Spend Spike" />
+          ) : status === "warning" ? (
+            <StatusBadge status="warning" label="Spend Warning" />
           ) : (
             <StatusBadge status="safe" label="On Track" />
           )}
@@ -97,7 +98,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
         <div>
           <div className="h-1.5 rounded-full bg-secondary">
             <div
-              className={`h-1.5 rounded-full transition-all ${isOverBudget ? "bg-destructive" : "bg-aws"
+              className={`h-1.5 rounded-full transition-all ${status === "critical" ? "bg-destructive" : status === "warning" ? "bg-warning" : "bg-aws"
                 }`}
               style={{ width: `${Math.min(percentOfBudget, 100)}%` }}
             />
@@ -115,7 +116,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
         </p>
         <ResponsiveContainer width="100%" height="75%">
           <AreaChart
-            data={data?.history && data.history.length > 0 ? data.history : monthlySpend}
+            data={monthlyTrend}
             margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
           >
             <defs>
@@ -125,7 +126,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
               </linearGradient>
             </defs>
             <XAxis
-              dataKey="month"
+              dataKey="label"
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
@@ -159,7 +160,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
           Cost by Service
         </p>
         <ResponsiveContainer width="100%" height={120}>
-          <BarChart data={serviceBreakdown} layout="vertical" barSize={14} margin={{ left: 0, right: 10 }}>
+          <BarChart data={serviceBreakdown.map(s => ({ service: s.service, cost: s.amount }))} layout="vertical" barSize={14} margin={{ left: 0, right: 10 }}>
             <XAxis type="number" hide />
             <YAxis
               type="category"
