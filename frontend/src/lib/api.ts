@@ -7,6 +7,7 @@ export interface ToolData {
     credits_remaining: number;
     percent_remaining: number;
     daily_avg_usage: number;
+    current_24h_usage?: number;
     predicted_exhaustion: string | null;
     status: string;
     history?: { day: string, credits: number }[];

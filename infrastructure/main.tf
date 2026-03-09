@@ -22,6 +22,7 @@ resource "aws_lambda_function" "billing_fetcher" {
       POSTHOG_API_KEY      = var.posthog_api_key
       POSTHOG_PROJECT_ID   = var.posthog_project_id
       POSTHOG_HOST         = var.posthog_host
+      POSTHOG_PERSONAL_API_KEY = var.posthog_personal_api_key
       TAVILY_API_KEY       = var.tavily_api_key
       ANTHROPIC_ADMIN_KEY  = var.anthropic_admin_key
       ANTHROPIC_ORG_ID     = var.anthropic_org_id

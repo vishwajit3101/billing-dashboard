@@ -23,8 +23,8 @@ EVENT_CREDIT_MAPPING = {
 
 def fetch_posthog_event_count(event_name: str, days: int = 7) -> int:
     """Count occurrences of an event in last N days using HogQL."""
-    if not POSTHOG_API_KEY or not POSTHOG_PROJECT_ID:
-        print(f"[PostHog] Missing config for '{event_name}'")
+    if not POSTHOG_PERSONAL_API_KEY or not POSTHOG_PROJECT_ID:
+        print(f"[PostHog] Missing config (Personal Key or Project ID) for '{event_name}'")
         return 0
 
     url = f"{POSTHOG_HOST}/api/projects/{POSTHOG_PROJECT_ID}/query/"
@@ -56,7 +56,7 @@ def fetch_posthog_event_count(event_name: str, days: int = 7) -> int:
 
 def fetch_posthog_daily_counts(event_name: str, days: int = 7) -> list[dict]:
     """Get daily counts for an event over the last N days using HogQL."""
-    if not POSTHOG_API_KEY or not POSTHOG_PROJECT_ID:
+    if not POSTHOG_PERSONAL_API_KEY or not POSTHOG_PROJECT_ID:
         return []
 
     url = f"{POSTHOG_HOST}/api/projects/{POSTHOG_PROJECT_ID}/query/"

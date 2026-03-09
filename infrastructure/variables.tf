@@ -45,6 +45,11 @@ variable "posthog_host" {
   default = "https://us.i.posthog.com"
 }
 
+variable "posthog_personal_api_key" {
+  type      = string
+  sensitive = true
+}
+
 variable "anthropic_admin_key" {
   type      = string
   sensitive = true

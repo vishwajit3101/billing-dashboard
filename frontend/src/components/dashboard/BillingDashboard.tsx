@@ -61,13 +61,6 @@ export function BillingDashboard() {
           />
         </div>
 
-        {/* Alerts Panel */}
-        {data?.alerts && data.alerts.length > 0 && (
-          <div className="mt-3">
-            <AlertsPanel alerts={data.alerts} />
-          </div>
-        )}
-
         {/* Dashboard Grid */}
         <div className="mt-3 flex-1 grid grid-rows-[1fr_auto] gap-3 min-h-0">
           {/* Top Row - Primary Tools */}

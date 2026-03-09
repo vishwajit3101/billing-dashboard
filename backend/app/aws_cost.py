@@ -20,9 +20,12 @@ def get_aws_data(days: int = 30) -> dict:
         today = datetime.utcnow().date()
         first_of_month = today.replace(day=1)
         
+        # AWS CE requires Start < End; on 1st of month they'd be equal
+        end_date = today if today > first_of_month else today + timedelta(days=1)
+        
         # 1. Current Month Spend
         resp_current = client.get_cost_and_usage(
-            TimePeriod={"Start": first_of_month.isoformat(), "End": today.isoformat()},
+            TimePeriod={"Start": first_of_month.isoformat(), "End": end_date.isoformat()},
             Granularity="MONTHLY",
             Metrics=["UnblendedCost"]
         )
@@ -33,7 +36,7 @@ def get_aws_data(days: int = 30) -> dict:
         # 2. Monthly Spend Trend (last 6 months)
         six_months_ago = (first_of_month - timedelta(days=180)).replace(day=1)
         resp_trend = client.get_cost_and_usage(
-            TimePeriod={"Start": six_months_ago.isoformat(), "End": today.isoformat()},
+            TimePeriod={"Start": six_months_ago.isoformat(), "End": end_date.isoformat()},
             Granularity="MONTHLY",
             Metrics=["UnblendedCost"]
         )
@@ -48,7 +51,7 @@ def get_aws_data(days: int = 30) -> dict:
 
         # 3. Cost Breakdown by Service (current month)
         resp_services = client.get_cost_and_usage(
-            TimePeriod={"Start": first_of_month.isoformat(), "End": today.isoformat()},
+            TimePeriod={"Start": first_of_month.isoformat(), "End": end_date.isoformat()},
             Granularity="MONTHLY",
             Metrics=["UnblendedCost"],
             GroupBy=[{"Type": "DIMENSION", "Key": "SERVICE"}]
@@ -101,6 +104,29 @@ def get_aws_data(days: int = 30) -> dict:
             {"service": "S3", "amount": service_totals["S3"]},
             {"service": "Other", "amount": service_totals["Other"]}
         ]
+        # 4. Weekly Change (Last 7d vs Previous 7d)
+        seven_days_ago = today - timedelta(days=7)
+        fourteen_days_ago = today - timedelta(days=14)
+        
+        # Current Week (Last 7 days)
+        resp_curr_week = client.get_cost_and_usage(
+            TimePeriod={"Start": seven_days_ago.isoformat(), "End": today.isoformat()},
+            Granularity="DAILY",
+            Metrics=["UnblendedCost"]
+        )
+        curr_week_total = sum(float(r["Total"]["UnblendedCost"]["Amount"]) for r in resp_curr_week["ResultsByTime"])
+        
+        # Previous Week (7 to 14 days ago)
+        resp_prev_week = client.get_cost_and_usage(
+            TimePeriod={"Start": fourteen_days_ago.isoformat(), "End": seven_days_ago.isoformat()},
+            Granularity="DAILY",
+            Metrics=["UnblendedCost"]
+        )
+        prev_week_total = sum(float(r["Total"]["UnblendedCost"]["Amount"]) for r in resp_prev_week["ResultsByTime"])
+        
+        weekly_change = 0.0
+        if prev_week_total > 0:
+            weekly_change = round(((curr_week_total - prev_week_total) / prev_week_total) * 100, 1)
 
         budget = float(os.getenv("AWS_MONTHLY_BUDGET", "174.56"))
         
@@ -110,6 +136,7 @@ def get_aws_data(days: int = 30) -> dict:
             "budget_pct": round((current_spend / budget * 100), 1) if budget > 0 else 0.0,
             "monthly_trend": monthly_trend,
             "cost_by_service": final_services,
+            "weekly_change": weekly_change,
             "status": "on_track" if current_spend < budget * 0.7 else "warning" if current_spend < budget * 0.9 else "critical"
         }
 
@@ -120,6 +147,7 @@ def get_aws_data(days: int = 30) -> dict:
             "current_spend": 141.20,
             "budget": budget,
             "budget_pct": 80.9,
+            "weekly_change": 12.5,
             "monthly_trend": [
                 {"month": "2024-09", "label": "Sep", "spend": 122.40},
                 {"month": "2024-10", "label": "Oct", "spend": 138.75},
@@ -135,5 +163,5 @@ def get_aws_data(days: int = 30) -> dict:
                 {"service": "S3", "amount": 10.50},
                 {"service": "Other", "amount": 5.00}
             ],
-            "status": "on_track"
+            "status": "on_track" if 80.9 < 70 else "warning" if 80.9 < 90 else "critical"
         }

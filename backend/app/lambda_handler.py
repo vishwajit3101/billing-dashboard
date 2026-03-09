@@ -115,11 +115,17 @@ def lambda_handler(event, context):
         # Re-fetch from DB for consistent alignment
         cur.execute("SELECT name, credits_remaining, percent_remaining, daily_avg_usage, predicted_exhaustion, status FROM tools")
         tool_rows = cur.fetchall()
+
+        # Get current 24h usage from PostHog for spike detection (FR6)
+        from app.posthog import get_tool_usage_stats
+        current_usage_stats = get_tool_usage_stats()
+
         tools_data = [{
             "name": r[0], 
             "credits_remaining": float(r[1]), 
             "percent_remaining": float(r[2]),
             "daily_avg_usage": float(r[3]),
+            "current_24h_usage": current_usage_stats.get(r[0], {}).get("current_24h", 0.0),
             "predicted_exhaustion": r[4],
             "status": r[5]
         } for r in tool_rows]
@@ -136,8 +142,8 @@ def lambda_handler(event, context):
         from app.notifications import send_alert_email
         
         alerts = generate_alerts(tools_data, aws_summary)
-        if any(a.get("severity") == "critical" for a in alerts):
-            print(f"[Lambda] Detected {len(alerts)} alerts, sending critical notification...")
+        if alerts:
+            print(f"[Lambda] Detected {len(alerts)} alerts, sending notification...")
             send_alert_email(alerts)
 
     except Exception as e:

@@ -257,6 +257,13 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
             {dynamicExhaustion}
           </p>
         </div>
+        <div>
+          <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
+            <DollarSign className="h-3 w-3" />
+            <span className="text-[10px]">This Month</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">$4,280</p>
+        </div>
       </div>
     </div>
   );
