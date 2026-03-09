@@ -90,7 +90,7 @@ def generate_alerts(tools: list[dict], aws: dict) -> list[dict]:
             })
 
     # AWS budget alert
-    aws_percent = aws.get("percent_used", 0)
+    aws_percent = aws.get("budget_pct", aws.get("percent_used", 0))
     if aws_percent > 90:
         alerts.append({
             "type": "alert",

@@ -210,7 +210,7 @@ async def export_report(
         ])
 
     writer.writerow([])
-    writer.writerow(["Summary", "", "", f"AWS: {data['aws']['percent_used']}%", "", "", ""])
+    writer.writerow(["Summary", "", "", f"AWS: {data['aws']['budget_pct']}%", "", "", ""])
     writer.writerow(["Alert Count", data["alert_count"], "", "", "", "", ""])
 
     writer.writerow([])
