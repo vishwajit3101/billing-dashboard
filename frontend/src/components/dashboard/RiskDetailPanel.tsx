@@ -284,7 +284,9 @@ export function RiskDetailPanel({
 
             <div className="pt-4 border-t border-border space-y-3">
               <p className="text-xs text-muted-foreground">
-                Last alert sent 3h ago
+                {dashboardData?.last_updated
+                  ? `Last synced: ${new Date(dashboardData.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : 'No recent alert data'}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -443,7 +445,9 @@ export function RiskDetailPanel({
             {/* Unified Action Footer */}
             <div className="pt-4 border-t border-border space-y-3">
               <p className="text-xs text-muted-foreground">
-                Last alert sent 2h ago
+                {dashboardData?.last_updated
+                  ? `Last synced: ${new Date(dashboardData.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : 'No recent alert data'}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -616,7 +620,9 @@ export function RiskDetailPanel({
           {/* Unified Action Footer */}
           <div className="pt-4 border-t border-border space-y-3">
             <p className="text-xs text-muted-foreground">
-              Last alert sent 4h ago
+              {dashboardData?.last_updated
+                ? `Last synced: ${new Date(dashboardData.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : 'No recent alert data'}
             </p>
             <div className="flex gap-3">
               <Button

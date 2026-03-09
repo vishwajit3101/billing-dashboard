@@ -12,12 +12,23 @@ resource "aws_lambda_function" "billing_fetcher" {
 
   environment {
     variables = {
-      DB_HOST     = var.db_host
-      DB_NAME     = var.db_name
-      DB_USER     = var.db_user
-      DB_PASSWORD = var.db_password
-      POSTHOG_API_KEY = var.posthog_api_key
-      TAVILY_API_KEY = var.tavily_api_key
+      DB_HOST              = var.db_host
+      DB_PORT              = var.db_port
+      DB_NAME              = var.db_name
+      DB_USER              = var.db_user
+      DB_PASSWORD          = var.db_password
+      AWS_REGION           = var.aws_region
+      AWS_MONTHLY_BUDGET   = var.aws_monthly_budget
+      POSTHOG_API_KEY      = var.posthog_api_key
+      POSTHOG_PROJECT_ID   = var.posthog_project_id
+      POSTHOG_HOST         = var.posthog_host
+      TAVILY_API_KEY       = var.tavily_api_key
+      ANTHROPIC_ADMIN_KEY  = var.anthropic_admin_key
+      ANTHROPIC_ORG_ID     = var.anthropic_org_id
+      FULLENRICH_API_KEY   = var.fullenrich_api_key
+      BUYERCADDY_API_KEY   = var.buyercaddy_api_key
+      ALERT_EMAIL_SENDER   = var.alert_email_sender
+      ALERT_EMAIL_RECIPIENT = var.alert_email_recipient
     }
   }
 }

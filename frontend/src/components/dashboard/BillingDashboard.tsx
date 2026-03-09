@@ -5,6 +5,7 @@ import { AnthropicCard } from "./AnthropicCard";
 import { AWSCard } from "./AWSCard";
 import { ToolCard } from "./ToolCard";
 import { RiskDetailPanel } from "./RiskDetailPanel";
+import { AlertsPanel } from "./AlertsPanel";
 
 import { useDashboard } from "@/hooks/useDashboard";
 
@@ -59,6 +60,13 @@ export function BillingDashboard() {
             nextExhaustion={nextExhaustion}
           />
         </div>
+
+        {/* Alerts Panel */}
+        {data?.alerts && data.alerts.length > 0 && (
+          <div className="mt-3">
+            <AlertsPanel alerts={data.alerts} />
+          </div>
+        )}
 
         {/* Dashboard Grid */}
         <div className="mt-3 flex-1 grid grid-rows-[1fr_auto] gap-3 min-h-0">

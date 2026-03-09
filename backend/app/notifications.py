@@ -4,25 +4,41 @@ import os
 from datetime import date
 
 def send_alert_email(alerts: list[dict]):
+    if not alerts:
+        return
+
     critical_alerts = [a for a in alerts if a.get("severity") == "critical"]
-    if not critical_alerts:
+    warning_alerts = [a for a in alerts if a.get("severity") in ("warning", "alert")]
+
+    # Only send email if there are critical or warning-level alerts
+    if not critical_alerts and not warning_alerts:
         return
 
     aws_region = os.getenv("AWS_REGION", "ap-south-1")
     sender = os.getenv("ALERT_EMAIL_SENDER", "billing@operator.ai")
     recipient = os.getenv("ALERT_EMAIL_RECIPIENT", os.getenv("DB_USER", "admin@operator.ai"))
     
-    subject = f"CRITICAL Billing Alert - {len(critical_alerts)} Issues ({date.today().isoformat()})"
-    body_text = f"URGENT: Critical billing risks detected\n"
+    severity_label = "CRITICAL" if critical_alerts else "WARNING"
+    subject = f"{severity_label} Billing Alert - {len(alerts)} Issues ({date.today().isoformat()})"
+    
+    body_text = f"Billing risks detected\n"
     body_text += "----------------------------------------\n"
     body_text += f"Date: {date.today().isoformat()}\n"
-    body_text += f"Total critical alerts: {len(critical_alerts)}\n\n"
+    body_text += f"Total alerts: {len(alerts)}\n\n"
 
-    for alert in critical_alerts:
-        body_text += f"[{alert['severity'].upper()}] {alert['message']}\n"
-        body_text += f" → Status: Critical (Action Required)\n\n"
+    if critical_alerts:
+        body_text += "=== CRITICAL (Immediate Action Required) ===\n"
+        for alert in critical_alerts:
+            body_text += f"  [CRITICAL] {alert['message']}\n"
+        body_text += "\n"
 
-    body_text += "Immediate action required to avoid service disruption.\n"
+    if warning_alerts:
+        body_text += "=== WARNINGS & ALERTS ===\n"
+        for alert in warning_alerts:
+            body_text += f"  [{alert['severity'].upper()}] {alert['message']}\n"
+        body_text += "\n"
+
+    body_text += "Please review the dashboard for details.\n"
     body_text += f"Dashboard: {os.getenv('DASHBOARD_URL', 'http://localhost:8080')}\n"
     body_text += "----------------------------------------\n"
 

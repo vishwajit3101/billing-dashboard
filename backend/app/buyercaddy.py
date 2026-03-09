@@ -21,7 +21,7 @@ def get_buyercaddy_history(days: int = 7) -> list[dict]:
             {
                 "day": (today - timedelta(days=days - 1 - i)).strftime("%b %d"),
                 "label": ["6d ago", "5d ago", "4d ago", "3d ago", "2d ago", "Yesterday", "Today"][i] if days == 7 else f"{days-1-i}d ago",
-                "credits": random.randint(40, 180)
+                "credits": 80 + ((i * 37 + 13) % 101)  # deterministic: range 80-180
             }
             for i in range(days)
         ]
@@ -50,7 +50,7 @@ def get_buyercaddy_history_mock(days: int):
         {
             "day": (today - timedelta(days=days - 1 - i)).strftime("%b %d"),
             "label": ["6d ago", "5d ago", "4d ago", "3d ago", "2d ago", "Yesterday", "Today"][i] if days == 7 else f"{days-1-i}d ago",
-            "credits": random.randint(40, 180)
+            "credits": 80 + ((i * 37 + 13) % 101)  # deterministic: range 80-180
         }
         for i in range(days)
     ]

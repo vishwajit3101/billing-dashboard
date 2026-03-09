@@ -124,11 +124,12 @@ def lambda_handler(event, context):
             "status": r[5]
         } for r in tool_rows]
 
-        # Use mock-ish/placeholder for AWS in lambda for now since real AWS spend is complex to fully re-calc here
-        # but enough to trigger budget alerts
+        # Budget alerts: use real budget from env var
+        aws_budget = float(os.environ.get("AWS_MONTHLY_BUDGET", "174.56"))
         aws_summary = {
-            "percent_used": (total_aws / 12000.0 * 100),
-            "monthly_spend": total_aws
+            "budget_pct": (total_aws / aws_budget * 100) if aws_budget > 0 else 0,
+            "monthly_spend": total_aws,
+            "weekly_change": 0.0
         }
 
         from app.calculations import generate_alerts

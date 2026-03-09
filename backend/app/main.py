@@ -59,9 +59,8 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
     cur.execute("""
         SELECT name, credits_remaining, percent_remaining, daily_avg_usage, total_credits
         FROM tools
-        WHERE last_updated >= %s
         ORDER BY name
-    """, (start_date,))
+    """)
     tools_rows = cur.fetchall()
 
     from app.posthog import get_tool_usage_stats, get_tool_usage_history

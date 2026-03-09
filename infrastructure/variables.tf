@@ -28,3 +28,46 @@ variable "tavily_api_key" {
   type      = string
   sensitive = true
 }
+
+variable "db_port" {
+  default = "5432"
+}
+
+variable "aws_monthly_budget" {
+  default = "174.56"
+}
+
+variable "posthog_project_id" {
+  type = string
+}
+
+variable "posthog_host" {
+  default = "https://us.i.posthog.com"
+}
+
+variable "anthropic_admin_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "anthropic_org_id" {
+  type = string
+}
+
+variable "fullenrich_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "buyercaddy_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "alert_email_sender" {
+  default = "billing@operator.ai"
+}
+
+variable "alert_email_recipient" {
+  default = "admin@operator.ai"
+}

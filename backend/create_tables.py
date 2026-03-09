@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS tools (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
     credits_remaining NUMERIC DEFAULT 0,
+    total_credits NUMERIC DEFAULT 0,
     percent_remaining FLOAT DEFAULT 0,
     daily_avg_usage NUMERIC DEFAULT 0,
     predicted_exhaustion DATE,
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS aws_spend (
     id SERIAL PRIMARY KEY,
     date DATE,
     service VARCHAR(50),
-    amount NUMERIC
+    amount NUMERIC,
+    UNIQUE(date, service)
 );
 """)
 

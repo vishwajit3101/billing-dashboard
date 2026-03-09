@@ -104,9 +104,8 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
   const isCritical = status.toLowerCase() === "critical";
   const isWarning = status.toLowerCase() === "warning";
 
-  // Dynamic stats based on range (Mock logic)
-  const dynamicExhaustion = days > 30 ? "Late May 2026" : exhaustion;
-  const dynamicMonthlySpend = days === 7 ? "$980" : days === 14 ? "$1,960" : days === 90 ? "$12,840" : "$4,280";
+  // Use real data from backend
+  const dynamicExhaustion = exhaustion;
 
   // X-Axis Optimization Logic
   const chartData = data?.history && data.history.length > 0
@@ -257,13 +256,6 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
           <p className={cn("text-sm font-semibold", isCritical ? "text-destructive" : "text-foreground")}>
             {dynamicExhaustion}
           </p>
-        </div>
-        <div>
-          <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
-            <DollarSign className="h-3 w-3" />
-            <span className="text-[10px]">This Month</span>
-          </div>
-          <p className="text-sm font-semibold text-foreground">{dynamicMonthlySpend}</p>
         </div>
       </div>
     </div>
