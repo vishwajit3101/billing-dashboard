@@ -107,10 +107,13 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
   // Use real data from backend
   const dynamicExhaustion = exhaustion;
 
-  // X-Axis Optimization Logic
+  // X-Axis Optimization Logic: fallback to zeros if history is empty to ensure graph renders
   const chartData = data?.history && data.history.length > 0
     ? data.history.map((h) => ({ day: h.day, credits: h.credits }))
-    : (mockUsageData[days] || mockUsageData[30]);
+    : Array.from({ length: days }, (_, i) => ({
+      day: new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      credits: 0
+    }));
 
   const tickInterval = { 7: 1, 14: 2, 30: 5, 90: 14 }[days as 7 | 14 | 30 | 90] || 5;
   const ticks = chartData
@@ -207,6 +210,15 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
                   ticks={ticks}
                   interval={0}
                   padding={{ left: 0, right: 0 }}
+                  tickFormatter={(value) => {
+                    try {
+                      const d = new Date(value);
+                      if (isNaN(d.getTime())) return value;
+                      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    } catch {
+                      return value;
+                    }
+                  }}
                   tick={{
                     fontSize: 9,
                     fill: "hsl(var(--muted-foreground))",
@@ -262,7 +274,9 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
             <DollarSign className="h-3 w-3" />
             <span className="text-[10px]">This Month</span>
           </div>
-          <p className="text-sm font-semibold text-foreground">$4,280</p>
+          <p className="text-sm font-semibold text-foreground">
+            {data?.history ? `$${(data.history.reduce((sum, h) => sum + h.credits, 0) * 0.015).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"}
+          </p>
         </div>
       </div>
     </div>

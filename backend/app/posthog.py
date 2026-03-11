@@ -3,9 +3,10 @@ import requests
 import os
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 POSTHOG_API_KEY = os.getenv("POSTHOG_API_KEY")
@@ -43,7 +44,9 @@ def fetch_posthog_event_count(event_name: str, days: int = 7) -> int:
     payload = {"query": {"kind": "HogQLQuery", "query": query}}
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=15)
+        session = requests.Session()
+        session.trust_env = False
+        resp = session.post(url, headers=headers, json=payload, timeout=15)
         resp.raise_for_status()
         result = resp.json()
         count = result.get("results", [[0]])[0][0]
@@ -78,7 +81,9 @@ def fetch_posthog_daily_counts(event_name: str, days: int = 7) -> list[dict]:
     payload = {"query": {"kind": "HogQLQuery", "query": query}}
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=15)
+        session = requests.Session()
+        session.trust_env = False
+        resp = session.post(url, headers=headers, json=payload, timeout=15)
         resp.raise_for_status()
         result = resp.json()
         # PostHog returns results as a list of lists: [[day, count], ...]
@@ -117,7 +122,8 @@ def get_tool_usage_history(days: int = 7) -> dict[str, list[dict]]:
             tool_history.append({
                 "day": d["day"],
                 "label": label,
-                "credits": d["count"] * credits_per
+                "credits": d["count"] * credits_per,
+                "count": d["count"]
             })
         
         if tool not in history:

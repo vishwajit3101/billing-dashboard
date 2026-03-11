@@ -17,6 +17,7 @@ interface ToolCardProps {
   name: string;
   data?: ToolData;
   sparklineData: number[];
+  days?: number;
   onClick?: () => void;
 }
 
@@ -46,13 +47,17 @@ export function ToolCard({
   name,
   data,
   sparklineData,
+  days = 7,
   onClick,
 }: ToolCardProps) {
   const config = toolConfig[tool];
+  const hasLiveData = Boolean(data);
   const creditsRemaining = data?.credits_remaining ?? 0;
-  const percentRemaining = data?.percent_remaining ?? 100;
-  const status = data?.status ?? "Safe";
+  const percentRemaining = data?.percent_remaining ?? 0;
+  const status = data?.status ?? "Unknown";
   const exhaustionDate = data?.predicted_exhaustion;
+  const hasRealHistory = Boolean(data?.history && data.history.length > 0);
+  const hasFallbackSparkline = sparklineData.length > 0;
 
   const isCritical = status.toLowerCase() === "critical";
   const isWarning = status.toLowerCase() === "warning";
@@ -63,7 +68,7 @@ export function ToolCard({
   ];
 
   // Use real history if available, otherwise fallback to index-based mapping
-  const sparkData = data?.history && data.history.length > 0
+  const sparkData = hasRealHistory
     ? data.history.map((h, i) => ({ index: i, value: h.credits }))
     : sparklineData.map((value, index) => ({ index, value }));
 
@@ -135,7 +140,9 @@ export function ToolCard({
             {creditsRemaining.toLocaleString()}
           </p>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="text-[10px] text-muted-foreground whitespace-nowrap">credits left</p>
+            <p className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {hasLiveData ? "credits left" : "No live credits data"}
+            </p>
             {exhaustionDate && (
               <>
                 <span className="text-[8px] text-muted-foreground">•</span>
@@ -150,18 +157,22 @@ export function ToolCard({
 
       {/* Sparkline */}
       <div className="pt-2 border-t border-border">
-        <p className="mb-1 text-[10px] text-muted-foreground">7-day usage</p>
-        <ResponsiveContainer width="100%" height={24}>
-          <LineChart data={sparkData}>
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke={config.color}
-              strokeWidth={1.5}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <p className="mb-1 text-[10px] text-muted-foreground">{days}-day usage</p>
+        {(hasRealHistory || hasFallbackSparkline) ? (
+          <ResponsiveContainer width="100%" height={24}>
+            <LineChart data={sparkData}>
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={config.color}
+                strokeWidth={1.5}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-[10px] text-muted-foreground">No real usage data yet</p>
+        )}
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ from app.calculations import (
 from app.tavily import get_tavily_remaining_credits
 from app.fullenrich import get_fullenrich_remaining_credits
 from app.anthropic import get_anthropic_remaining_credits
-from app.buyercaddy import get_buyercaddy_remaining_credits
+from app.buyercaddy import get_buyercaddy_remaining_credits, get_buyercaddy_history, get_buyercaddy_usage_metrics
 import io
 import csv
 import boto3
@@ -65,48 +65,65 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
         """)
         tools_rows = cur.fetchall()
 
-        from app.posthog import get_tool_usage_stats, get_tool_usage_history
-        tool_usage_data = get_tool_usage_stats()
-        tool_history_data = get_tool_usage_history(days=days)
+        # 1. Fetch tool history from usage_history table
+        cur.execute("""
+            SELECT tool_name, date, credits_consumed, events_count
+            FROM usage_history
+            WHERE date >= %s
+            ORDER BY date ASC
+        """, (start_date,))
+        history_rows = cur.fetchall()
+        
+        db_history_data = {}
+        for h_row in history_rows:
+            tool_name, h_date, h_credits, h_count = h_row
+            if tool_name not in db_history_data:
+                db_history_data[tool_name] = []
+            
+            # Format history for frontend
+            days_ago = (date.today() - h_date).days
+            if days_ago == 0:
+                label = "Today"
+            elif days_ago == 1:
+                label = "Yesterday"
+            else:
+                label = f"{days_ago}d ago"
+                
+            db_history_data[tool_name].append({
+                "day": h_date.strftime("%Y-%m-%d"),
+                "label": label,
+                "credits": float(h_credits or 0),
+                "count": int(h_count or 0)
+            })
 
         tools = []
         for row in tools_rows:
             name, credits_db, percent_db, daily_db, total_db = row
+            
+            # Read from DB - no real-time API calls in dashboard
+            credits = float(credits_db or 0)
             total = float(total_db or 100)
-
-            # Real API for Tavily, FullEnrich, Anthropic
-            if name == "Tavily":
-                credits, total = get_tavily_remaining_credits()
-            elif name == "FullEnrich":
-                credits, total = get_fullenrich_remaining_credits()
-            elif name == "Anthropic":
-                credits, total = get_anthropic_remaining_credits()
-            elif name == "Buyercaddy":
-                credits, total = get_buyercaddy_remaining_credits()
-            else:
-                credits = float(credits_db or 0)
-
-            percent = (credits / total * 100) if total > 0 else 0
+            percent = float(percent_db or 0)
+            daily = float(daily_db or 0)
+            if name == "Buyercaddy" and daily <= 0:
+                try:
+                    bc_metrics = get_buyercaddy_usage_metrics(total)
+                    daily = float(bc_metrics["avg_daily_usage"])
+                except Exception as exc:
+                    print(f"[BuyerCaddy] Dashboard metrics fallback error: {exc}")
             
-            # Get usage stats and history for this tool
-            tool_stats = tool_usage_data.get(name, {})
-            daily = tool_stats.get("avg_7d", float(daily_db or 0))
-            curr_24h = tool_stats.get("current_24h", 0.0)
-            history = tool_history_data.get(name, [])
-            
-            # BuyerCaddy specific mock history (already has labels)
+            # Fetch history from our compiled DB data
+            history = db_history_data.get(name, [])
             if name == "Buyercaddy" and not history:
-                from app.buyercaddy import get_buyercaddy_history
-                history = get_buyercaddy_history(days=7)
-                if history:
-                    daily = sum(h["credits"] for h in history) / len(history)
+                history = get_buyercaddy_history(days)
+            
+            # Extract last 24h usage from history if today's entry exists
+            curr_24h = 0.0
+            today_entry = next((h for h in history if h["label"] == "Today"), None)
+            if today_entry:
+                curr_24h = today_entry["credits"]
 
-            # Ensure history is sorted and has labels
-            if name != "Anthropic" and len(history) > 7:
-                history = history[-7:]
-            elif name == "Anthropic" and len(history) > days:
-                 history = history[-days:]
-
+            # Predict exhaustion based on DB-stored daily average
             exhaustion = calculate_exhaustion_date(credits, daily)
             status = calculate_risk_status(float(percent))
 

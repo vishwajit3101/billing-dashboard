@@ -39,7 +39,6 @@ interface ToolConfig {
   creditsRemaining: number;
   creditsTotal: number;
   avgDaily: number;
-  exhaustionDate: string;
   sparklineData: { day: string; credits: number }[];
 }
 
@@ -51,7 +50,6 @@ const toolConfigs: Record<ToolType, ToolConfig> = {
     creditsRemaining: 2800,
     creditsTotal: 10000,
     avgDaily: 420,
-    exhaustionDate: "February 17, 2026",
     sparklineData: [
       { day: "Feb 4", credits: 320 },
       { day: "Feb 5", credits: 280 },
@@ -69,7 +67,6 @@ const toolConfigs: Record<ToolType, ToolConfig> = {
     creditsRemaining: 500,
     creditsTotal: 5000,
     avgDaily: 230,
-    exhaustionDate: "February 13, 2026",
     sparklineData: [
       { day: "Feb 4", credits: 180 },
       { day: "Feb 5", credits: 220 },
@@ -87,7 +84,6 @@ const toolConfigs: Record<ToolType, ToolConfig> = {
     creditsRemaining: 6800,
     creditsTotal: 8000,
     avgDaily: 110,
-    exhaustionDate: "April 12, 2026",
     sparklineData: [
       { day: "Feb 4", credits: 80 },
       { day: "Feb 5", credits: 120 },
@@ -146,26 +142,28 @@ export function RiskDetailPanel({
   if (type !== "anthropic" && type !== "aws") {
     const config = toolConfigs[type];
     const realData = findTool(type);
+    const useStaticFallback = type !== "buyercaddy";
 
-    const creditsRemaining = realData?.credits_remaining ?? config.creditsRemaining;
-    const avgDaily = realData?.daily_avg_usage ?? config.avgDaily;
-    const exhaustionDate = realData?.predicted_exhaustion ?? config.exhaustionDate;
+    const creditsRemaining = realData?.credits_remaining ?? (useStaticFallback ? config.creditsRemaining : 0);
+    const avgDaily = realData?.daily_avg_usage ?? (useStaticFallback ? config.avgDaily : 0);
+    const exhaustionDate = realData?.predicted_exhaustion
+      ? new Date(realData.predicted_exhaustion).toLocaleDateString(undefined, {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : null;
+    const exhaustionLabel = exhaustionDate ?? "No exhaustion predicted";
 
-    // Generate simple trend based on avgDaily if real history is unavailable
     const trendData = realData?.history && realData.history.length > 0
-      ? realData.history.map(h => ({
+      ? realData.history.slice(-7).map(h => ({
         day: (h as any).label || (h as any).day,
         credits: (h as any).credits ?? (h as any).credits_used
       }))
-      : realData ? [
-        { day: "6d ago", credits: avgDaily * 0.8 },
-        { day: "5d ago", credits: avgDaily * 1.2 },
-        { day: "4d ago", credits: avgDaily * 0.9 },
-        { day: "3d ago", credits: avgDaily * 1.1 },
-        { day: "2d ago", credits: avgDaily * 1.0 },
-        { day: "Yesterday", credits: avgDaily * 1.3 },
-        { day: "Today", credits: avgDaily }
-      ] : config.sparklineData;
+      : realData ? Array.from({ length: 7 }, (_, i) => ({
+        day: `${6 - i}d ago`,
+        credits: 0
+      })) : (useStaticFallback ? config.sparklineData : []);
 
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -216,10 +214,10 @@ export function RiskDetailPanel({
                 </p>
               </div>
               <p className="text-xl font-bold text-destructive">
-                {exhaustionDate}
+                {exhaustionLabel}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Based on 7-day rolling average
+                {exhaustionDate ? "Based on 7-day rolling average" : "No usage trend available to forecast exhaustion"}
               </p>
             </div>
 
@@ -227,59 +225,73 @@ export function RiskDetailPanel({
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
                 Last 7-Day Usage
               </p>
-              <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={trendData}>
-                  <defs>
-                    <linearGradient
-                      id={`panelGrad-${type}`}
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="0%"
-                        stopColor={config.color}
-                        stopOpacity={0.3}
-                      />
-                      <stop
-                        offset="100%"
-                        stopColor={config.color}
-                        stopOpacity={0}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="day"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{
-                      fontSize: 10,
-                      fill: "hsl(var(--muted-foreground))",
-                    }}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "11px",
-                    }}
-                    formatter={(value: number) => [
-                      value.toLocaleString(),
-                      "Credits Used",
-                    ]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="credits"
-                    stroke={config.color}
-                    strokeWidth={2}
-                    fill={`url(#panelGrad-${type})`}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {trendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={160}>
+                  <AreaChart data={trendData}>
+                    <defs>
+                      <linearGradient
+                        id={`panelGrad-${type}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={config.color}
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={config.color}
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) => {
+                        if (value.includes(' ago') || value === 'Today' || value === 'Yesterday') return value;
+                        try {
+                          const d = new Date(value);
+                          if (isNaN(d.getTime())) return value;
+                          return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                        } catch {
+                          return value;
+                        }
+                      }}
+                      tick={{
+                        fontSize: 10,
+                        fill: "hsl(var(--muted-foreground))",
+                      }}
+                    />
+                    <YAxis hide />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "11px",
+                      }}
+                      formatter={(value: number) => [
+                        value.toLocaleString(),
+                        "Credits Used",
+                      ]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="credits"
+                      stroke={config.color}
+                      strokeWidth={2}
+                      fill={`url(#panelGrad-${type})`}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground">No real usage data yet</p>
+              )}
             </div>
 
             <div className="pt-4 border-t border-border space-y-3">
@@ -320,16 +332,19 @@ export function RiskDetailPanel({
 
   if (type === "anthropic") {
     const realData = findTool("Anthropic");
-    const creditsRemaining = realData?.credits_remaining ?? 42350;
-    const avgDaily = realData?.daily_avg_usage ?? 15420;
-    const exhaustionDate = realData?.predicted_exhaustion ?? "February 6, 2026";
+    const creditsRemaining = realData?.credits_remaining ?? 0;
+    const avgDaily = realData?.daily_avg_usage ?? 0;
+    const exhaustionDate = realData?.predicted_exhaustion ?? "N/A";
 
     const trendData = realData?.history && realData.history.length > 0
       ? realData.history.slice(-7).map(h => ({
         day: (h as any).label || h.day,
         credits: h.credits
       }))
-      : anthropicUsage;
+      : Array.from({ length: 7 }, (_, i) => ({
+        day: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        credits: 0
+      }));
 
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -413,6 +428,16 @@ export function RiskDetailPanel({
                     dataKey="day"
                     axisLine={false}
                     tickLine={false}
+                    tickFormatter={(value) => {
+                      if (value.includes(' ago') || value === 'Today' || value === 'Yesterday') return value;
+                      try {
+                        const d = new Date(value);
+                        if (isNaN(d.getTime())) return value;
+                        return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                      } catch {
+                        return value;
+                      }
+                    }}
                     tick={{
                       fontSize: 10,
                       fill: "hsl(var(--muted-foreground))",
@@ -485,7 +510,10 @@ export function RiskDetailPanel({
   const percentUsed = awsData?.budget_pct ?? 0;
   const status = awsData?.status ?? "safe";
   const monthlyTrend = awsData?.monthly_trend ?? awsMonthly;
-  const serviceData = awsData?.cost_by_service ?? awsServices;
+  const serviceData = (awsData?.cost_by_service ?? awsServices).map(s => ({
+    service: s.service,
+    cost: "amount" in s ? (s as any).amount : (s as any).cost
+  }));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -609,7 +637,7 @@ export function RiskDetailPanel({
                   ]}
                 />
                 <Bar
-                  dataKey="amount"
+                  dataKey="cost"
                   fill="hsl(var(--aws))"
                   radius={[0, 4, 4, 0]}
                 />
