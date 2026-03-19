@@ -1,0 +1,61 @@
+{
+  "count": 2189,
+  "details": [
+    {
+      "path": "/**",
+      "count": 26
+    },
+    {
+      "path": "/api/ai/find-customers-of-products",
+      "count": 26
+    },
+    {
+      "path": "/api/companies/{companyDomain}/cohort/{cohortEnum}/metrics/usage",
+      "count": 4
+    },
+    {
+      "path": "/api/companies/{companyDomain}/competitors",
+      "count": 40
+    },
+    {
+      "path": "/api/companies/{companyDomain}/firmographics",
+      "count": 95
+    },
+    {
+      "path": "/api/companies/{companyDomain}/metrics/usage",
+      "count": 1
+    },
+    {
+      "path": "/api/companies/{companyDomain}/products",
+      "count": 3
+    },
+    {
+      "path": "/api/companies/{companyDomain}/products-in-use",
+      "count": 1445
+    },
+    {
+      "path": "/api/companies/{companyDomain}/products/json",
+      "count": 3
+    },
+    {
+      "path": "/api/companies/{companyDomain}/products/paged",
+      "count": 525
+    },
+    {
+      "path": "/api/companies/search",
+      "count": 3
+    },
+    {
+      "path": "/api/dictionary/product-categories",
+      "count": 2
+    },
+    {
+      "path": "/api/products/search",
+      "count": 7
+    },
+    {
+      "path": "/api/vendors",
+      "count": 9
+    }
+  ]
+}

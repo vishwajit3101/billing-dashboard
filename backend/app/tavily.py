@@ -8,8 +8,8 @@ TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
 def get_tavily_remaining_credits() -> tuple:
     if not TAVILY_API_KEY:
-        print("[Tavily] No API key in .env → fallback to mock 2800")
-        return 2800.0, 10000.0
+        print("[Tavily] No API key in .env → returning 0.0 remaining")
+        return 0.0, 1000.0
 
     url = "https://api.tavily.com/usage"
     headers = {"Authorization": f"Bearer {TAVILY_API_KEY}"}
@@ -31,5 +31,5 @@ def get_tavily_remaining_credits() -> tuple:
         return float(remaining), float(plan_limit)
 
     except Exception as e:
-        print(f"[Tavily] Error: {str(e)} → fallback to mock 2800")
-        return 2800.0, 10000.0
+        print(f"[Tavily] Error: {str(e)} → returning 0.0 remaining")
+        return 0.0, 1000.0

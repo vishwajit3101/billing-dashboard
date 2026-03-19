@@ -18,75 +18,6 @@ import {
 import { ToolData } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const mockUsageData: Record<number, { day: string; credits: number }[]> = {
-  7: [
-    { day: "Feb 21", credits: 14100 },
-    { day: "Feb 22", credits: 12900 },
-    { day: "Feb 23", credits: 15600 },
-    { day: "Feb 24", credits: 14800 },
-    { day: "Feb 25", credits: 16200 },
-    { day: "Feb 26", credits: 15100 },
-    { day: "Feb 27", credits: 17800 },
-  ],
-  14: [
-    { day: "Feb 14", credits: 13200 },
-    { day: "Feb 15", credits: 14100 },
-    { day: "Feb 16", credits: 12900 },
-    { day: "Feb 17", credits: 15600 },
-    { day: "Feb 18", credits: 14800 },
-    { day: "Feb 19", credits: 16200 },
-    { day: "Feb 20", credits: 15100 },
-    { day: "Feb 21", credits: 17800 },
-    { day: "Feb 22", credits: 16500 },
-    { day: "Feb 23", credits: 18200 },
-    { day: "Feb 24", credits: 17100 },
-    { day: "Feb 25", credits: 19500 },
-    { day: "Feb 26", credits: 18800 },
-    { day: "Feb 27", credits: 20100 },
-  ],
-  30: [
-    { day: "Jan 29", credits: 15100 },
-    { day: "Jan 30", credits: 17800 },
-    { day: "Jan 31", credits: 16500 },
-    { day: "Feb 1", credits: 18200 },
-    { day: "Feb 2", credits: 17100 },
-    { day: "Feb 3", credits: 19500 },
-    { day: "Feb 4", credits: 18400 },
-    { day: "Feb 5", credits: 20200 },
-    { day: "Feb 6", credits: 19100 },
-    { day: "Feb 7", credits: 21800 },
-    { day: "Feb 8", credits: 20500 },
-    { day: "Feb 9", credits: 22200 },
-    { day: "Feb 10", credits: 21100 },
-    { day: "Feb 11", credits: 23500 },
-    { day: "Feb 12", credits: 22400 },
-    { day: "Feb 13", credits: 24200 },
-    { day: "Feb 14", credits: 23100 },
-    { day: "Feb 15", credits: 25800 },
-    { day: "Feb 16", credits: 24500 },
-    { day: "Feb 17", credits: 26200 },
-    { day: "Feb 18", credits: 25100 },
-    { day: "Feb 19", credits: 27500 },
-    { day: "Feb 20", credits: 26400 },
-    { day: "Feb 21", credits: 28200 },
-    { day: "Feb 22", credits: 27100 },
-    { day: "Feb 23", credits: 29500 },
-    { day: "Feb 24", credits: 28400 },
-    { day: "Feb 25", credits: 30200 },
-    { day: "Feb 26", credits: 29100 },
-    { day: "Feb 27", credits: 31800 },
-  ],
-  90: [
-    { day: "Dec 01", credits: 10200 },
-    { day: "Dec 15", credits: 12400 },
-    { day: "Jan 01", credits: 14100 },
-    { day: "Jan 15", credits: 16800 },
-    { day: "Feb 01", credits: 19500 },
-    { day: "Feb 15", credits: 22100 },
-    { day: "Feb 27", credits: 25400 },
-  ],
-};
-
 interface AnthropicCardProps {
   data?: ToolData;
   onRiskClick?: () => void;
@@ -275,7 +206,7 @@ export function AnthropicCard({ data, onRiskClick, days, isLoading }: AnthropicC
             <span className="text-[10px]">This Month</span>
           </div>
           <p className="text-sm font-semibold text-foreground">
-            {data?.history ? `$${(data.history.reduce((sum, h) => sum + h.credits, 0) * 0.015).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"}
+            {data?.history ? `$${data.history.reduce((sum, h) => sum + h.credits, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00"}
           </p>
         </div>
       </div>

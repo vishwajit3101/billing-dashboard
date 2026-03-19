@@ -67,10 +67,10 @@ export function ToolCard({
     { name: "Remaining", value: percentRemaining },
   ];
 
-  // Use real history if available, otherwise fallback to index-based mapping
+  // Use real history if available
   const sparkData = hasRealHistory
     ? data.history.map((h, i) => ({ index: i, value: h.credits }))
-    : sparklineData.map((value, index) => ({ index, value }));
+    : [];
 
   return (
     <div

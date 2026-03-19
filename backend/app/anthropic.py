@@ -17,19 +17,16 @@ def get_anthropic_remaining_credits() -> tuple:
     based on the configured total credits limit.
     """
     if not ANTHROPIC_ADMIN_KEY:
-        print("[Anthropic] Missing admin key → returning 0.0")
+        print("[Anthropic] Missing admin key → returning 0.0 remaining")
         return 0.0, ANTHROPIC_TOTAL_CREDITS
 
-    # Use the mentor-provided endpoint and format
     url = "https://api.anthropic.com/v1/organizations/usage_report/messages"
-    
     headers = {
         "x-api-key": ANTHROPIC_ADMIN_KEY,
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json"
     }
 
-    # Fetch usage for the last 30 days to act as current period consumption
     end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=30)
     
@@ -44,29 +41,21 @@ def get_anthropic_remaining_credits() -> tuple:
         next_page = ""
         
         while has_more:
-            # Append pagination token if it exists
             page_url = f"{url_with_params}&page={next_page}" if next_page else url_with_params
-            
             resp = requests.get(page_url, headers=headers, timeout=10)
-            
             resp.raise_for_status()
             data = resp.json()
-
-            # Anthropic returns a "data" array of daily buckets, each having a "results" array
             days_data = data.get("data", [])
             
             for day_bucket in days_data:
                 results = day_bucket.get("results", [])
                 for item in results:
-                    # Token counts based on Anthropic's detailed metrics
                     uncached_in = item.get("uncached_input_tokens", 0)
                     out_tokens = item.get("output_tokens", 0)
                     cache_read = item.get("cache_read_input_tokens", 0)
                     cache_creation_obj = item.get("cache_creation", {})
                     cache_create = cache_creation_obj.get("ephemeral_5m_input_tokens", 0) + cache_creation_obj.get("ephemeral_1h_input_tokens", 0)
                     
-                    # Rough blended pricing (Claude 3.5 Sonnet average approximation: $3 per 1M input, $15 per 1M output, cache read $0.30 per 1M, cache write $3.75 per 1M)
-                    # We map this to a "Credits" value (assumed $1 = 1 Credit for this dashboard's scale)
                     cost_in = (uncached_in / 1000000.0) * 3.00
                     cost_out = (out_tokens / 1000000.0) * 15.00
                     cost_cache_read = (cache_read / 1000000.0) * 0.30
@@ -74,26 +63,18 @@ def get_anthropic_remaining_credits() -> tuple:
                     
                     total_usage_cost += (cost_in + cost_out + cost_cache_read + cost_cache_write)
             
-            # Handle Pagination
             has_more = data.get("has_more", False)
             next_page = data.get("next_page", "")
 
-        # We now have total usage cost in approximate dollars/credits. 
-        # Remaining is Total - Usage
-        remaining = ANTHROPIC_TOTAL_CREDITS - total_usage_cost
-        
-        # Ensure it doesn't drop below 0
-        remaining = max(0.0, remaining)
-
-        print(f"[Anthropic] Real remaining calculated: {remaining:.2f} (Usage: {total_usage_cost:.2f}) out of {ANTHROPIC_TOTAL_CREDITS}")
+        remaining = max(0.0, ANTHROPIC_TOTAL_CREDITS - total_usage_cost)
+        print(f"[Anthropic] Real remaining calculated: {remaining:.2f} out of {ANTHROPIC_TOTAL_CREDITS}")
         return float(remaining), ANTHROPIC_TOTAL_CREDITS
 
     except Exception as e:
         print(f"[Anthropic] Error fetching real data: {str(e)}")
         traceback.print_exc()
-        print(f"[Anthropic] Falling back to total standard limit {ANTHROPIC_TOTAL_CREDITS}")
-        # Return total limit if we can't fetch usage, so it doesn't show critical
-        return ANTHROPIC_TOTAL_CREDITS, ANTHROPIC_TOTAL_CREDITS
+        print(f"[Anthropic] Returning 0.0 remaining due to error")
+        return 0.0, ANTHROPIC_TOTAL_CREDITS
 
 def get_anthropic_usage_history(days: int = 90) -> list[dict]:
     """

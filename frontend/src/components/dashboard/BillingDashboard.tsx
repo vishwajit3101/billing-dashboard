@@ -91,7 +91,7 @@ export function BillingDashboard() {
               sparklineData={
                 (findTool("Tavily")?.history && findTool("Tavily")!.history!.length > 0)
                   ? findTool("Tavily")!.history!.map(h => h.credits)
-                  : [320, 280, 410, 350, 390, 420, 380]
+                  : []
               }
               onClick={() => setRiskPanel({ open: true, type: "tavily" })}
             />
@@ -103,7 +103,7 @@ export function BillingDashboard() {
               sparklineData={
                 (findTool("FullEnrich")?.history && findTool("FullEnrich")!.history!.length > 0)
                   ? findTool("FullEnrich")!.history!.map(h => h.credits)
-                  : [180, 220, 190, 240, 210, 250, 230]
+                  : []
               }
               onClick={() => setRiskPanel({ open: true, type: "fullenrich" })}
             />
@@ -120,6 +120,7 @@ export function BillingDashboard() {
               onClick={() => setRiskPanel({ open: true, type: "buyercaddy" })}
             />
           </div>
+
         </div>
       </div>
 

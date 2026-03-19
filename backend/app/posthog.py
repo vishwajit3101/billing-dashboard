@@ -14,13 +14,30 @@ POSTHOG_PROJECT_ID = os.getenv("POSTHOG_PROJECT_ID")
 POSTHOG_PERSONAL_API_KEY = os.getenv("POSTHOG_PERSONAL_API_KEY")
 
 
-# Exact mapping from your PRD
-EVENT_CREDIT_MAPPING = {
-    "search_performed": ("Tavily", 1),
-    "lead_enriched": ("FullEnrich", 2),
-    "ai_workflow_run": ("Anthropic", 5),
-    "data_fetched": ("Buyercaddy", 1),
-}
+import json
+
+EVENT_CREDIT_MAPPING_RAW = os.getenv("EVENT_CREDIT_MAPPING")
+if EVENT_CREDIT_MAPPING_RAW:
+    try:
+        # Expected format: '{"search_performed": ["Tavily", 1], ...}'
+        raw_map = json.loads(EVENT_CREDIT_MAPPING_RAW)
+        EVENT_CREDIT_MAPPING = {k: (tuple(v) if isinstance(v, list) else v) for k, v in raw_map.items()}
+    except Exception as e:
+        print(f"[PostHog] Error parsing EVENT_CREDIT_MAPPING env var, using defaults: {e}")
+        EVENT_CREDIT_MAPPING = {
+            "search_performed": ("Tavily", 1),
+            "lead_enriched": ("FullEnrich", 2),
+            "ai_workflow_run": ("Anthropic", 5),
+            "data_fetched": ("Buyercaddy", 1),
+        }
+else:
+    # Exact mapping from your PRD
+    EVENT_CREDIT_MAPPING = {
+        "search_performed": ("Tavily", 1),
+        "lead_enriched": ("FullEnrich", 2),
+        "ai_workflow_run": ("Anthropic", 5),
+        "data_fetched": ("Buyercaddy", 1),
+    }
 
 def fetch_posthog_event_count(event_name: str, days: int = 7) -> int:
     """Count occurrences of an event in last N days using HogQL."""

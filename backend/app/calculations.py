@@ -20,16 +20,15 @@ def calculate_risk_status(percent_remaining: float) -> str:
     """
     PRD risk logic (Section 11):
     >30% → Safe
-    20–30% → Warning
+    10–30% → Warning  (PRD says 20-30 for warning, but <10 for critical, so 10-20 is implicitly warning)
     <10% → Critical
-    Note: Code also handles 10-20% as 'Warning' to bridge the gap in PRD.
     """
     if percent_remaining > 30:
         return "Safe"
-    elif percent_remaining >= 10:
-        return "Warning"
-    else:
+    elif percent_remaining < 10:
         return "Critical"
+    else:
+        return "Warning"
 
 
 # app/calculations.py

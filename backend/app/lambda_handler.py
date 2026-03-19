@@ -4,7 +4,10 @@ import json
 import os
 import psycopg2
 import boto3
+from dotenv import load_dotenv
 from datetime import date, timedelta, datetime
+
+load_dotenv()
 from app.tavily import get_tavily_remaining_credits
 from app.fullenrich import get_fullenrich_remaining_credits
 from app.anthropic import get_anthropic_remaining_credits
@@ -22,6 +25,81 @@ def get_db_connection():
         connect_timeout=5,
     )
 
+
+def _get_existing_tool_snapshots(cur) -> dict[str, dict]:
+    cur.execute("SELECT name, credits_remaining, total_credits FROM tools")
+    snapshots = {}
+    for name, credits_remaining, total_credits in cur.fetchall():
+        snapshots[name] = {
+            "credits_remaining": float(credits_remaining or 0.0),
+            "total_credits": float(total_credits or 0.0),
+        }
+    return snapshots
+
+
+def _upsert_usage_history_row(cur, tool_name: str, usage_date: date, credits_consumed: float, events_count: int = 0) -> None:
+    cur.execute(
+        """
+        SELECT credits_consumed, events_count
+        FROM usage_history
+        WHERE tool_name = %s AND date = %s
+        """,
+        (tool_name, usage_date),
+    )
+    existing_row = cur.fetchone()
+
+    if existing_row:
+        existing_credits = float(existing_row[0] or 0.0)
+        existing_count = int(existing_row[1] or 0)
+        cur.execute(
+            """
+            UPDATE usage_history
+            SET credits_consumed = %s, events_count = %s
+            WHERE tool_name = %s AND date = %s
+            """,
+            (round(existing_credits + credits_consumed, 2), existing_count + events_count, tool_name, usage_date),
+        )
+        return
+
+    cur.execute(
+        """
+        INSERT INTO usage_history (tool_name, date, credits_consumed, events_count)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (tool_name, usage_date, round(credits_consumed, 2), events_count),
+    )
+
+
+def _record_provider_usage_delta(
+    cur,
+    tool_name: str,
+    usage_date: date,
+    current_remaining: float,
+    existing_snapshots: dict[str, dict],
+) -> None:
+    previous_snapshot = existing_snapshots.get(tool_name)
+    previous_remaining = previous_snapshot["credits_remaining"] if previous_snapshot else None
+
+    usage_delta = 0.0
+    if previous_remaining is not None:
+        usage_delta = max(previous_remaining - current_remaining, 0.0)
+
+    _upsert_usage_history_row(cur, tool_name, usage_date, usage_delta, 0)
+
+
+def _get_recent_daily_usage(cur, tool_name: str, days: int = 7) -> float:
+    cur.execute(
+        """
+        SELECT COALESCE(SUM(credits_consumed), 0)
+        FROM usage_history
+        WHERE tool_name = %s
+          AND date >= %s
+        """,
+        (tool_name, date.today() - timedelta(days=days - 1)),
+    )
+    total_usage = float(cur.fetchone()[0] or 0.0)
+    return total_usage / max(days, 1)
+
 def lambda_handler(event, context):
     print("Hourly fetch started...")
 
@@ -30,6 +108,7 @@ def lambda_handler(event, context):
 
     try:
         today = date.today()
+        existing_tool_snapshots = _get_existing_tool_snapshots(cur)
 
         # 1. AWS Cost Explorer
         ce = boto3.client("ce")
@@ -91,6 +170,8 @@ def lambda_handler(event, context):
                     real_usage_stats["Anthropic"] = {}
                 real_usage_stats["Anthropic"]["current_24h"] = recent_7_days[0]["credits"]
 
+        source_history_tools = {tool_name for tool_name, entries in history_data.items() if entries}
+
         for tool_name, history_list in history_data.items():
             for entry in history_list:
                 # entry is like {'day': '2026-03-09', 'credits': 15.0, 'count': 3}
@@ -128,6 +209,12 @@ def lambda_handler(event, context):
                 else:
                     credits_rem, total_credits = fetch_func()
                     daily_usage = real_daily_usage.get(name, 0.0)
+
+                if name != "Anthropic" and name not in source_history_tools:
+                    _record_provider_usage_delta(cur, name, today, float(credits_rem), existing_tool_snapshots)
+                    if daily_usage <= 0:
+                        daily_usage = _get_recent_daily_usage(cur, name, 7)
+
                 percent = (credits_rem / total_credits * 100) if total_credits > 0 else 0
                 exhaustion = calculate_exhaustion_date(credits_rem, daily_usage)
                 status = calculate_risk_status(percent)

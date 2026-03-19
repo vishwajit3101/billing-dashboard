@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from app.database import get_db_connection
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, UTC
 from app.calculations import (
     calculate_exhaustion_date,
     calculate_risk_status,
@@ -38,8 +38,23 @@ print(f"[INFO] ANTHROPIC_ADMIN_KEY: {'set' if os.getenv('ANTHROPIC_ADMIN_KEY') e
 
 
 
+from fastapi import FastAPI, Query, Response, HTTPException
+from fastapi.responses import JSONResponse
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Operator.ai Billing Backend")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"Global error: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"message": "An internal server error occurred.", "detail": str(exc)},
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,6 +63,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _format_history_label(entry_date: date) -> str:
+    days_ago = (date.today() - entry_date).days
+    if days_ago == 0:
+        return "Today"
+    if days_ago == 1:
+        return "Yesterday"
+    return f"{days_ago}d ago"
+
+
+def _fill_missing_history_days(history: list[dict], start_date: date, days: int) -> list[dict]:
+    if not history:
+        return []
+
+    history_by_day = {entry["day"]: entry for entry in history}
+    filled_history = []
+
+    for offset in range(days):
+        current_date = start_date + timedelta(days=offset)
+        day_key = current_date.isoformat()
+        entry = history_by_day.get(day_key)
+
+        filled_history.append({
+            "day": day_key,
+            "label": _format_history_label(current_date),
+            "credits": float(entry["credits"]) if entry else 0.0,
+            "count": int(entry.get("count", 0)) if entry else 0,
+        })
+
+    return filled_history
 
 
 @app.get("/dashboard")
@@ -79,19 +125,10 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
             tool_name, h_date, h_credits, h_count = h_row
             if tool_name not in db_history_data:
                 db_history_data[tool_name] = []
-            
-            # Format history for frontend
-            days_ago = (date.today() - h_date).days
-            if days_ago == 0:
-                label = "Today"
-            elif days_ago == 1:
-                label = "Yesterday"
-            else:
-                label = f"{days_ago}d ago"
-                
+
             db_history_data[tool_name].append({
                 "day": h_date.strftime("%Y-%m-%d"),
-                "label": label,
+                "label": _format_history_label(h_date),
                 "credits": float(h_credits or 0),
                 "count": int(h_count or 0)
             })
@@ -116,6 +153,7 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
             history = db_history_data.get(name, [])
             if name == "Buyercaddy" and not history:
                 history = get_buyercaddy_history(days)
+            history = _fill_missing_history_days(history, start_date, days)
             
             # Extract last 24h usage from history if today's entry exists
             curr_24h = 0.0
@@ -159,13 +197,16 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
             "aws": aws,
             "alerts": alerts,
             "alert_count": len(alerts),
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
             "filtered_days": days,
             "date_range": {
                 "from": start_date.isoformat(),
                 "to": date.today().isoformat()
             }
         }
+    except Exception as e:
+        logger.error(f"Error fetching dashboard data: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch dashboard data")
     finally:
         cur.close()
         conn.close()

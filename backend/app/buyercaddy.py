@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 
 import requests
@@ -135,6 +135,33 @@ def _extract_credit_values(payload: dict, total_default: float) -> tuple[float |
     return remaining, total
 
 
+def _get_recent_buyercaddy_usage_from_db(days: int = 7) -> float | None:
+    try:
+        from app.database import get_db_connection
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(credits_consumed), 0)
+                FROM usage_history
+                WHERE tool_name = %s
+                  AND date >= %s
+                """,
+                ("Buyercaddy", datetime.now(UTC).date() - timedelta(days=days - 1)),
+            )
+            total_usage = float(cur.fetchone()[0] or 0.0)
+        finally:
+            cur.close()
+            conn.close()
+
+        return total_usage / max(days, 1)
+    except Exception as exc:
+        print(f"[BuyerCaddy] Recent DB usage fallback error: {exc}")
+        return None
+
+
 def get_buyercaddy_usage_metrics(total_credits: float | None = None) -> dict:
     _, _, total_default = _get_buyercaddy_config()
     total = float(total_credits or total_default)
@@ -144,9 +171,14 @@ def get_buyercaddy_usage_metrics(total_credits: float | None = None) -> dict:
     if used_credits is None:
         raise ValueError("BuyerCaddy usage report did not include a usable count")
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     days_elapsed = max(today.day, 1)
     avg_daily = used_credits / days_elapsed
+
+    recent_avg = _get_recent_buyercaddy_usage_from_db(7)
+    if recent_avg is not None and recent_avg > 0:
+        avg_daily = recent_avg
+
     remaining = max(total - used_credits, 0.0)
 
     return {
@@ -165,7 +197,7 @@ def _derive_buyercaddy_remaining_from_posthog(total_default: float) -> tuple[flo
     if not posthog_key or not posthog_project_id:
         return None
 
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     month_start = today.replace(day=1)
     days_to_fetch = max((today - month_start).days + 1, 1)
     daily_counts = fetch_posthog_daily_counts("data_fetched", days_to_fetch)
@@ -228,8 +260,8 @@ def get_buyercaddy_history(days: int = 7) -> list[dict]:
     try:
         daily_counts = fetch_posthog_daily_counts("data_fetched", days)
         if not daily_counts:
-            print("[BuyerCaddy] No PostHog history available -> using mock history")
-            return get_buyercaddy_history_mock(days)
+            print("[BuyerCaddy] No PostHog history available")
+            return []
 
         sorted_counts = sorted(daily_counts, key=lambda row: row["day"])
         history = []
@@ -253,30 +285,10 @@ def get_buyercaddy_history(days: int = 7) -> list[dict]:
 
         return history
     except Exception as e:
-        print(f"[BuyerCaddy] History error: {str(e)} -> using mock history")
-        return get_buyercaddy_history_mock(days)
+        print(f"[BuyerCaddy] History error: {str(e)}")
+        return []
 
 
-def get_buyercaddy_history_mock(days: int) -> list[dict]:
-    today = datetime.utcnow().date()
-    history = []
-    for i in range(days):
-        days_ago = days - 1 - i
-        if days_ago == 0:
-            label = "Today"
-        elif days_ago == 1:
-            label = "Yesterday"
-        else:
-            label = f"{days_ago}d ago"
-
-        history.append({
-            "day": (today - timedelta(days=days_ago)).strftime("%Y-%m-%d"),
-            "label": label,
-            "credits": 80 + ((i * 37 + 13) % 101),
-            "count": 80 + ((i * 37 + 13) % 101),
-        })
-
-    return history
 
 
 def fetch_buyercaddy_credit_snapshot() -> tuple[float, float, bool]:
@@ -284,8 +296,8 @@ def fetch_buyercaddy_credit_snapshot() -> tuple[float, float, bool]:
     api_key, balance_url, total_default = _get_buyercaddy_config()
 
     if not api_key:
-        print("[BuyerCaddy] No API key in .env -> using mock 6800")
-        return 6800.0, total_default, False
+        print("[BuyerCaddy] No API key in .env → returning 0.0")
+        return 0.0, total_default, False
 
     try:
         data = fetch_buyercaddy_usage_report()
@@ -305,8 +317,8 @@ def fetch_buyercaddy_credit_snapshot() -> tuple[float, float, bool]:
         if derived_snapshot is not None:
             return derived_snapshot
 
-        print("[BuyerCaddy] No real fallback available -> using mock 6800")
-        return 6800.0, total_default, False
+        print("[BuyerCaddy] No real fallback available → returning 0.0")
+        return 0.0, total_default, False
 
 
 def get_buyercaddy_remaining_credits() -> tuple:

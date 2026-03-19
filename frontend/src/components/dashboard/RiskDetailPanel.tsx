@@ -37,62 +37,25 @@ interface ToolConfig {
   color: string;
   description: string;
   creditsRemaining: number;
-  creditsTotal: number;
   avgDaily: number;
-  sparklineData: { day: string; credits: number }[];
+  sparklineData: number[];
 }
 
-const toolConfigs: Record<ToolType, ToolConfig> = {
+const toolConfigs: Record<ToolType, { name: string; color: string; description: string }> = {
   tavily: {
     name: "Tavily",
     color: "hsl(var(--tavily))",
     description: "Search API credit monitoring",
-    creditsRemaining: 2800,
-    creditsTotal: 10000,
-    avgDaily: 420,
-    sparklineData: [
-      { day: "Feb 4", credits: 320 },
-      { day: "Feb 5", credits: 280 },
-      { day: "Feb 6", credits: 410 },
-      { day: "Feb 7", credits: 350 },
-      { day: "Feb 8", credits: 390 },
-      { day: "Feb 9", credits: 420 },
-      { day: "Feb 10", credits: 380 },
-    ],
   },
   fullenrich: {
     name: "FullEnrich",
     color: "hsl(var(--fullenrich))",
     description: "Data enrichment credit monitoring",
-    creditsRemaining: 500,
-    creditsTotal: 5000,
-    avgDaily: 230,
-    sparklineData: [
-      { day: "Feb 4", credits: 180 },
-      { day: "Feb 5", credits: 220 },
-      { day: "Feb 6", credits: 190 },
-      { day: "Feb 7", credits: 240 },
-      { day: "Feb 8", credits: 210 },
-      { day: "Feb 9", credits: 250 },
-      { day: "Feb 10", credits: 230 },
-    ],
   },
   buyercaddy: {
     name: "Buyercaddy",
     color: "hsl(var(--buyercaddy))",
     description: "Sales intelligence credit monitoring",
-    creditsRemaining: 6800,
-    creditsTotal: 8000,
-    avgDaily: 110,
-    sparklineData: [
-      { day: "Feb 4", credits: 80 },
-      { day: "Feb 5", credits: 120 },
-      { day: "Feb 6", credits: 90 },
-      { day: "Feb 7", credits: 110 },
-      { day: "Feb 8", credits: 140 },
-      { day: "Feb 9", credits: 100 },
-      { day: "Feb 10", credits: 130 },
-    ],
   },
 };
 
@@ -102,33 +65,6 @@ interface RiskDetailPanelProps {
   type: "anthropic" | "aws" | ToolType;
   dashboardData?: DashboardResponse;
 }
-
-const anthropicUsage = [
-  { day: "Feb 4", credits: 15600 },
-  { day: "Feb 5", credits: 14800 },
-  { day: "Feb 6", credits: 16200 },
-  { day: "Feb 7", credits: 15100 },
-  { day: "Feb 8", credits: 17800 },
-  { day: "Feb 9", credits: 16500 },
-  { day: "Feb 10", credits: 18200 },
-];
-
-const awsMonthly = [
-  { month: "Sep", spend: 8200 },
-  { month: "Oct", spend: 9100 },
-  { month: "Nov", spend: 8800 },
-  { month: "Dec", spend: 10200 },
-  { month: "Jan", spend: 12400 },
-  { month: "Feb", spend: 14100 },
-];
-
-const awsServices = [
-  { service: "EC2", cost: 5200 },
-  { service: "RDS", cost: 3800 },
-  { service: "S3", cost: 2100 },
-  { service: "Lambda", cost: 1800 },
-  { service: "Other", cost: 1200 },
-];
 
 export function RiskDetailPanel({
   open,
@@ -142,10 +78,8 @@ export function RiskDetailPanel({
   if (type !== "anthropic" && type !== "aws") {
     const config = toolConfigs[type];
     const realData = findTool(type);
-    const useStaticFallback = type !== "buyercaddy";
-
-    const creditsRemaining = realData?.credits_remaining ?? (useStaticFallback ? config.creditsRemaining : 0);
-    const avgDaily = realData?.daily_avg_usage ?? (useStaticFallback ? config.avgDaily : 0);
+    const creditsRemaining = realData?.credits_remaining ?? 0;
+    const avgDaily = realData?.daily_avg_usage ?? 0;
     const exhaustionDate = realData?.predicted_exhaustion
       ? new Date(realData.predicted_exhaustion).toLocaleDateString(undefined, {
           month: "long",
@@ -153,17 +87,14 @@ export function RiskDetailPanel({
           year: "numeric",
         })
       : null;
-    const exhaustionLabel = exhaustionDate ?? "No exhaustion predicted";
+    const exhaustionLabel = exhaustionDate ?? (realData ? "No exhaustion predicted" : "N/A");
 
     const trendData = realData?.history && realData.history.length > 0
       ? realData.history.slice(-7).map(h => ({
         day: (h as any).label || (h as any).day,
         credits: (h as any).credits ?? (h as any).credits_used
       }))
-      : realData ? Array.from({ length: 7 }, (_, i) => ({
-        day: `${6 - i}d ago`,
-        credits: 0
-      })) : (useStaticFallback ? config.sparklineData : []);
+      : [];
 
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -509,8 +440,8 @@ export function RiskDetailPanel({
   const budget = awsData?.budget ?? 174.56;
   const percentUsed = awsData?.budget_pct ?? 0;
   const status = awsData?.status ?? "safe";
-  const monthlyTrend = awsData?.monthly_trend ?? awsMonthly;
-  const serviceData = (awsData?.cost_by_service ?? awsServices).map(s => ({
+  const monthlyTrend = awsData?.monthly_trend ?? [];
+  const serviceData = (awsData?.cost_by_service ?? []).map(s => ({
     service: s.service,
     cost: "amount" in s ? (s as any).amount : (s as any).cost
   }));

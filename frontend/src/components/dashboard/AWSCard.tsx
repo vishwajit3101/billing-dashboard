@@ -19,23 +19,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const monthlySpend = [
-  { month: "Sep", spend: 8200 },
-  { month: "Oct", spend: 9100 },
-  { month: "Nov", spend: 8800 },
-  { month: "Dec", spend: 10200 },
-  { month: "Jan", spend: 12400 },
-  { month: "Feb", spend: 14100 },
-];
-
-const serviceBreakdown = [
-  { service: "EC2", cost: 5200 },
-  { service: "S3", cost: 2100 },
-  { service: "RDS", cost: 3800 },
-  { service: "Lambda", cost: 1800 },
-  { service: "Other", cost: 1200 },
-];
-
 import { AWSData } from "@/lib/api";
 
 interface AWSCardProps {
@@ -49,7 +32,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
   const percentOfBudget = data?.budget_pct ?? 0;
   const weeklyChange = data?.weekly_change ?? 0;
   const status = data?.status ?? "safe";
-  const monthlyTrend = data?.monthly_trend ?? monthlySpend;
+  const monthlyTrend = data?.monthly_trend ?? [];
   const serviceBreakdown = data?.cost_by_service ?? [];
 
   return (
