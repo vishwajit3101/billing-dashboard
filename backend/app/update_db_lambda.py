@@ -2,7 +2,7 @@ import json
 import os
 import psycopg2
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone
 
 load_dotenv()
 from app.calculations import calculate_exhaustion_date, calculate_risk_status, generate_alerts
@@ -120,6 +120,44 @@ def _record_provider_usage_delta(
     _upsert_usage_history_row(cur, tool_name, usage_date, usage_delta, 0)
 
 
+def _insert_tool_snapshot(
+    cur,
+    *,
+    name: str,
+    credits_remaining: float,
+    percent_remaining: float,
+    daily_avg_usage: float,
+    predicted_exhaustion: str | None,
+    status: str,
+    total_credits: float,
+    recorded_at: datetime,
+) -> None:
+    cur.execute(
+        """
+        INSERT INTO tools_snapshots (
+            name,
+            credits_remaining,
+            percent_remaining,
+            daily_avg_usage,
+            predicted_exhaustion,
+            status,
+            recorded_at,
+            total_credits
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            name,
+            credits_remaining,
+            percent_remaining,
+            daily_avg_usage,
+            predicted_exhaustion,
+            status,
+            recorded_at,
+            total_credits,
+        ),
+    )
+
+
 def lambda_handler(event, context):
     print("DB Update Lambda triggered...")
 
@@ -138,6 +176,7 @@ def lambda_handler(event, context):
             aws_spend = payload.get("aws_spend", {})
             history_data = payload.get("history_data", {})
             tools_data = payload.get("tools_data", [])
+            snapshot_recorded_at = datetime.now(timezone.utc)
 
             total_aws = aws_spend.get("total_aws", 0.0)
             aws_services = aws_spend.get("services", [])
@@ -201,6 +240,18 @@ def lambda_handler(event, context):
                     name, credits_rem, round(percent, 1), round(daily_usage, 2),
                     exhaustion, status, today_date, total_credits
                 ))
+
+                _insert_tool_snapshot(
+                    cur,
+                    name=name,
+                    credits_remaining=float(credits_rem),
+                    percent_remaining=round(percent, 1),
+                    daily_avg_usage=round(daily_usage, 2),
+                    predicted_exhaustion=exhaustion,
+                    status=status,
+                    total_credits=float(total_credits),
+                    recorded_at=snapshot_recorded_at,
+                )
                 print(f"Updated {name} to RDS")
 
                 tool["predicted_exhaustion"] = exhaustion

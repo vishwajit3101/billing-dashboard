@@ -33,8 +33,8 @@ MOCK_AWS = {
 def get_fresh_mock_db():
     mock_conn = MagicMock()
     mock_cur = MagicMock()
-    # first call fetchall() returns tools_rows, second call history_rows
-    mock_cur.fetchall.side_effect = [MOCK_TOOLS_DB, []] 
+    # first call fetchall() returns tools_rows, second history_rows, third snapshots
+    mock_cur.fetchall.side_effect = [MOCK_TOOLS_DB, [], []]
     mock_conn.cursor.return_value = mock_cur
     return mock_conn
 
@@ -69,6 +69,7 @@ def test_get_dashboard(mock_bc_history, mock_bc_metrics, mock_email, mock_aws, m
         assert "predicted_exhaustion" in tool
         assert "status" in tool
         assert "history" in tool
+        assert "snapshots" in tool
 
     # AWS has fields
     assert "current_spend" in data["aws"]

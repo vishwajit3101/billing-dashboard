@@ -6,7 +6,7 @@ resource "aws_lambda_function" "billing_fetcher" {
   filename      = "backend/billing-hourly-fetch.zip"
   function_name = "billing_watch_fetcher"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "app.lambda_handler.lambda_handler"
+  handler       = "app.fetch_data_lambda.lambda_handler"
   runtime       = "python3.11"
   timeout       = 30
 

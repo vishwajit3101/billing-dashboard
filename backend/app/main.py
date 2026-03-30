@@ -96,6 +96,54 @@ def _fill_missing_history_days(history: list[dict], start_date: date, days: int)
     return filled_history
 
 
+def _get_recent_tool_snapshots(cur) -> dict[str, list[dict]]:
+    cur.execute(
+        """
+        SELECT
+            name,
+            recorded_at,
+            credits_remaining,
+            percent_remaining,
+            daily_avg_usage,
+            predicted_exhaustion,
+            status,
+            total_credits
+        FROM tools_snapshots
+        WHERE recorded_at >= NOW() - INTERVAL '7 days'
+        ORDER BY recorded_at ASC
+        """
+    )
+    rows = cur.fetchall()
+
+    snapshots_by_tool: dict[str, list[dict]] = {}
+    for row in rows:
+        (
+            tool_name,
+            recorded_at,
+            credits_remaining,
+            percent_remaining,
+            daily_avg_usage,
+            predicted_exhaustion,
+            status,
+            total_credits,
+        ) = row
+        snapshots_by_tool.setdefault(tool_name, []).append({
+            "recorded_at": recorded_at.isoformat() if recorded_at else None,
+            "credits_remaining": float(credits_remaining or 0),
+            "percent_remaining": float(percent_remaining or 0),
+            "daily_avg_usage": float(daily_avg_usage or 0),
+            "predicted_exhaustion": (
+                predicted_exhaustion.isoformat()
+                if hasattr(predicted_exhaustion, "isoformat")
+                else predicted_exhaustion
+            ),
+            "status": status,
+            "total_credits": float(total_credits or 0),
+        })
+
+    return snapshots_by_tool
+
+
 @app.get("/dashboard")
 async def get_dashboard(days: int = Query(30, ge=1, le=90)):
     conn = get_db_connection()
@@ -119,6 +167,7 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
             ORDER BY date ASC
         """, (start_date,))
         history_rows = cur.fetchall()
+        snapshots_by_tool = _get_recent_tool_snapshots(cur)
         
         db_history_data = {}
         for h_row in history_rows:
@@ -173,7 +222,8 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
                 "current_24h_usage": round(curr_24h, 2),
                 "predicted_exhaustion": exhaustion,
                 "status": status,
-                "history": history
+                "history": history,
+                "snapshots": snapshots_by_tool.get(name, []),
             })
 
         from app.aws_cost import get_aws_data
