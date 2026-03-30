@@ -34,6 +34,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
   const status = data?.status ?? "safe";
   const monthlyTrend = data?.monthly_trend ?? [];
   const serviceBreakdown = data?.cost_by_service ?? [];
+  const filteredDays = data?.filtered_days ?? 30;
 
   return (
     <div
@@ -140,7 +141,7 @@ export function AWSCard({ data, onRiskClick }: AWSCardProps) {
       {/* Service Breakdown */}
       <div className="pt-2 border-t border-border">
         <p className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Cost by Service
+          Cost by Service ({filteredDays}d)
         </p>
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={serviceBreakdown.map(s => ({ service: s.service, cost: s.amount }))} layout="vertical" barSize={14} margin={{ left: 0, right: 10 }}>

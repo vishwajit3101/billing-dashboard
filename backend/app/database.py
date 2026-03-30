@@ -18,4 +18,4 @@ def get_db_connection():
         return conn
     except Exception as e:
         print(f"Database connection failed: {e}")
-        raise
+        raise 

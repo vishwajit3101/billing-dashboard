@@ -18,10 +18,13 @@ def calculate_exhaustion_date(credits_left: float, daily_usage: float) -> str | 
 
 def calculate_risk_status(percent_remaining: float) -> str:
     """
-    PRD risk logic (Section 11):
-    >30% → Safe
-    10–30% → Warning  (PRD says 20-30 for warning, but <10 for critical, so 10-20 is implicitly warning)
-    <10% → Critical
+    Consolidated PRD risk logic used by the dashboard:
+    >30% -> Safe
+    10-30% -> Warning
+    <10% -> Critical
+
+    The PRD text is internally inconsistent between warning thresholds, so the
+    implementation keeps 10-30 as warning to avoid an undefined 10-20 band.
     """
     if percent_remaining > 30:
         return "Safe"

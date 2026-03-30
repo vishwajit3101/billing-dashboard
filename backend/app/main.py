@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 from app.database import get_db_connection
-from datetime import date, timedelta, datetime, UTC
+from datetime import date, timedelta, datetime, timezone
 from app.calculations import (
     calculate_exhaustion_date,
     calculate_risk_status,
@@ -197,7 +197,7 @@ async def get_dashboard(days: int = Query(30, ge=1, le=90)):
             "aws": aws,
             "alerts": alerts,
             "alert_count": len(alerts),
-            "last_updated": datetime.now(UTC).isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
             "filtered_days": days,
             "date_range": {
                 "from": start_date.isoformat(),

@@ -16,7 +16,7 @@ describe("DashboardHeader Component", () => {
   it("renders title and subtitle", () => {
     render(<DashboardHeader selectedRange="30d" onRangeChange={() => {}} lastUpdated={new Date().toISOString()} onExport={() => {}} />);
     expect(screen.getByText("Operator.ai Billing Dashboard")).toBeDefined();
-    expect(screen.getByText("Real-time cost monitoring & risk visibility")).toBeDefined();
+    expect(screen.getByText("Hourly synced cost monitoring & risk visibility")).toBeDefined();
   });
 
   it("renders Export Report button", () => {

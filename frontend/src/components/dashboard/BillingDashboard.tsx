@@ -130,6 +130,7 @@ export function BillingDashboard() {
         onOpenChange={(open) => setRiskPanel((prev) => ({ ...prev, open }))}
         type={riskPanel.type}
         dashboardData={data}
+        days={days}
       />
     </div>
   );

@@ -31,7 +31,7 @@ export function DashboardHeader({ selectedRange, onRangeChange, onExport, lastUp
             Operator.ai Billing Dashboard
           </h1>
           <p className="text-sm text-muted-foreground">
-            Real-time cost monitoring & risk visibility
+            Hourly synced cost monitoring & risk visibility
           </p>
         </div>
       </div>
@@ -62,3 +62,4 @@ export function DashboardHeader({ selectedRange, onRangeChange, onExport, lastUp
     </header>
   );
 }
+

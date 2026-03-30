@@ -1,7 +1,15 @@
 # app/notifications.py
 import boto3
 import os
+import re
 from datetime import date
+
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _is_valid_email(value: str | None) -> bool:
+    return bool(value and EMAIL_RE.match(value.strip()))
+
 
 def send_alert_email(alerts: list[dict]):
     if not alerts:
@@ -15,8 +23,8 @@ def send_alert_email(alerts: list[dict]):
         return
 
     aws_region = os.getenv("AWS_REGION", "ap-south-1")
-    sender = os.getenv("ALERT_EMAIL_SENDER", "billing@operator.ai")
-    recipient = os.getenv("ALERT_EMAIL_RECIPIENT", os.getenv("DB_USER", "admin@operator.ai"))
+    sender = (os.getenv("ALERT_EMAIL_SENDER") or "").strip()
+    recipient = (os.getenv("ALERT_EMAIL_RECIPIENT") or "").strip()
     
     severity_label = "CRITICAL" if critical_alerts else "WARNING"
     subject = f"{severity_label} Billing Alert - {len(alerts)} Issues ({date.today().isoformat()})"
@@ -41,6 +49,18 @@ def send_alert_email(alerts: list[dict]):
     body_text += "Please review the dashboard for details.\n"
     body_text += f"Dashboard: {os.getenv('DASHBOARD_URL', 'http://localhost:8080')}\n"
     body_text += "----------------------------------------\n"
+
+    if not _is_valid_email(sender) or not _is_valid_email(recipient):
+        print(
+            "[SES] Skipping email send because ALERT_EMAIL_SENDER or "
+            "ALERT_EMAIL_RECIPIENT is missing/invalid."
+        )
+        print("\n" + "=" * 60)
+        print("EMAIL ALERT NOT SENT - INVALID EMAIL CONFIG")
+        print("Subject:", subject)
+        print(body_text)
+        print("=" * 60 + "\n")
+        return
 
     try:
         ses = boto3.client('ses', region_name=aws_region)

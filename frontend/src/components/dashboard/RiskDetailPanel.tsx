@@ -64,6 +64,7 @@ interface RiskDetailPanelProps {
   onOpenChange: (open: boolean) => void;
   type: "anthropic" | "aws" | ToolType;
   dashboardData?: DashboardResponse;
+  days?: number;
 }
 
 export function RiskDetailPanel({
@@ -71,6 +72,7 @@ export function RiskDetailPanel({
   onOpenChange,
   type,
   dashboardData,
+  days = 30,
 }: RiskDetailPanelProps) {
   const findTool = (name: string) => dashboardData?.tools.find(t => t.name.toLowerCase() === name.toLowerCase());
 
@@ -90,7 +92,7 @@ export function RiskDetailPanel({
     const exhaustionLabel = exhaustionDate ?? (realData ? "No exhaustion predicted" : "N/A");
 
     const trendData = realData?.history && realData.history.length > 0
-      ? realData.history.slice(-7).map(h => ({
+      ? realData.history.map(h => ({
         day: (h as any).label || (h as any).day,
         credits: (h as any).credits ?? (h as any).credits_used
       }))
@@ -154,7 +156,7 @@ export function RiskDetailPanel({
 
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                Last 7-Day Usage
+                Last {days}-Day Usage
               </p>
               {trendData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={160}>
@@ -268,12 +270,12 @@ export function RiskDetailPanel({
     const exhaustionDate = realData?.predicted_exhaustion ?? "N/A";
 
     const trendData = realData?.history && realData.history.length > 0
-      ? realData.history.slice(-7).map(h => ({
+      ? realData.history.map(h => ({
         day: (h as any).label || h.day,
         credits: h.credits
       }))
-      : Array.from({ length: 7 }, (_, i) => ({
-        day: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      : Array.from({ length: days }, (_, i) => ({
+        day: new Date(Date.now() - (days - 1 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         credits: 0
       }));
 
@@ -331,7 +333,7 @@ export function RiskDetailPanel({
             {/* 7-day Chart */}
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                Last 7-Day Usage
+                Last {days}-Day Usage
               </p>
               <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={trendData}>
@@ -441,6 +443,7 @@ export function RiskDetailPanel({
   const percentUsed = awsData?.budget_pct ?? 0;
   const status = awsData?.status ?? "safe";
   const monthlyTrend = awsData?.monthly_trend ?? [];
+  const filteredDays = awsData?.filtered_days ?? days;
   const serviceData = (awsData?.cost_by_service ?? []).map(s => ({
     service: s.service,
     cost: "amount" in s ? (s as any).amount : (s as any).cost
@@ -541,7 +544,7 @@ export function RiskDetailPanel({
           {/* Service Breakdown */}
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-              Cost by Service
+              Cost by Service ({filteredDays}d)
             </p>
             <ResponsiveContainer width="100%" height={serviceData.length > 5 ? serviceData.length * 30 : 160}>
               <BarChart data={serviceData} layout="vertical" barSize={12} margin={{ left: 10, right: 10 }}>

@@ -1,7 +1,7 @@
 # app/aws_cost.py
 import boto3
 from botocore.config import Config
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 import os
 import json
 import time
@@ -47,8 +47,10 @@ def get_aws_data(days: int = 30) -> dict:
         region_name=AWS_REGION,
         config=Config(proxies={}),
     )
-    today = datetime.now(UTC).date()
+    today = datetime.now(timezone.utc).date()
     first_of_month = today.replace(day=1)
+    range_days = max(int(days), 1)
+    range_start = today - timedelta(days=range_days - 1)
     
     # AWS CE requires Start < End; on 1st of month they'd be equal
     end_date = today if today > first_of_month else today + timedelta(days=1)
@@ -78,9 +80,9 @@ def get_aws_data(days: int = 30) -> dict:
             for r in resp_trend["ResultsByTime"]
         ]
 
-        # C. Cost Breakdown by Service (current month)
+        # C. Cost Breakdown by Service (selected range)
         resp_services = client.get_cost_and_usage(
-            TimePeriod={"Start": first_of_month.isoformat(), "End": end_date.isoformat()},
+            TimePeriod={"Start": range_start.isoformat(), "End": (today + timedelta(days=1)).isoformat()},
             Granularity="MONTHLY", Metrics=["UnblendedCost"],
             GroupBy=[{"Type": "DIMENSION", "Key": "SERVICE"}]
         )
@@ -112,18 +114,20 @@ def get_aws_data(days: int = 30) -> dict:
         
         final_services = [{"service": k, "amount": v} for k, v in service_totals.items()]
         
-        # D. Weekly Change (Last 7d vs Previous 7d)
-        seven_days_ago = today - timedelta(days=7)
-        fourteen_days_ago = today - timedelta(days=14)
-        
+        # D. Relative change for the selected range vs the previous range of equal length.
+        current_window_start = range_start
+        current_window_end = today + timedelta(days=1)
+        previous_window_end = current_window_start
+        previous_window_start = previous_window_end - timedelta(days=range_days)
+
         resp_curr_week = client.get_cost_and_usage(
-            TimePeriod={"Start": seven_days_ago.isoformat(), "End": today.isoformat()},
+            TimePeriod={"Start": current_window_start.isoformat(), "End": current_window_end.isoformat()},
             Granularity="DAILY", Metrics=["UnblendedCost"]
         )
         curr_week_total = sum(float(r["Total"]["UnblendedCost"]["Amount"]) for r in resp_curr_week["ResultsByTime"])
-        
+
         resp_prev_week = client.get_cost_and_usage(
-            TimePeriod={"Start": fourteen_days_ago.isoformat(), "End": seven_days_ago.isoformat()},
+            TimePeriod={"Start": previous_window_start.isoformat(), "End": previous_window_end.isoformat()},
             Granularity="DAILY", Metrics=["UnblendedCost"]
         )
         prev_week_total = sum(float(r["Total"]["UnblendedCost"]["Amount"]) for r in resp_prev_week["ResultsByTime"])
@@ -146,7 +150,8 @@ def get_aws_data(days: int = 30) -> dict:
             "monthly_trend": monthly_trend,
             "cost_by_service": final_services,
             "weekly_change": weekly_change,
-            "status": "on_track" if current_spend < budget * 0.7 else "warning" if current_spend < budget * 0.9 else "critical"
+            "status": "on_track" if current_spend < budget * 0.7 else "warning" if current_spend < budget * 0.9 else "critical",
+            "filtered_days": range_days,
         }
 
         # 3. Write Cache

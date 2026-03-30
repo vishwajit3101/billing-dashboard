@@ -40,7 +40,7 @@ def test_anthropic_exhaustion_scenario():
     assert calculate_exhaustion_date(3500, 100 * 5) == expected
 
 def test_calculate_risk_status():
-    # PRD Section 11: > 30% Safe, 10-30% Warning, < 10% Critical
+    # Consolidated dashboard rule: >30% Safe, 10-30% Warning, <10% Critical
     assert calculate_risk_status(80) == "Safe"
     assert calculate_risk_status(31) == "Safe"
     assert calculate_risk_status(30) == "Warning" # boundary
@@ -196,3 +196,4 @@ def test_generate_alerts_sorting_extended():
 
 def test_generate_alerts_no_data_graceful():
     assert generate_alerts([], {}) == []
+

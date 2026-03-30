@@ -84,7 +84,7 @@ describe("AWSCard Component", () => {
 
   it("renders cost by service chart", () => {
     const { container } = render(<AWSCard data={mockAWSData} />);
-    expect(screen.getByText("Cost by Service")).toBeDefined();
+    expect(screen.getByText("Cost by Service (30d)")).toBeDefined();
     expect(container.querySelector(".recharts-responsive-container")).toBeDefined();
   });
 

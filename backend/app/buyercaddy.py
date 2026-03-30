@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -149,7 +149,7 @@ def _get_recent_buyercaddy_usage_from_db(days: int = 7) -> float | None:
                 WHERE tool_name = %s
                   AND date >= %s
                 """,
-                ("Buyercaddy", datetime.now(UTC).date() - timedelta(days=days - 1)),
+                ("Buyercaddy", datetime.now(timezone.utc).date() - timedelta(days=days - 1)),
             )
             total_usage = float(cur.fetchone()[0] or 0.0)
         finally:
@@ -162,7 +162,10 @@ def _get_recent_buyercaddy_usage_from_db(days: int = 7) -> float | None:
         return None
 
 
-def get_buyercaddy_usage_metrics(total_credits: float | None = None) -> dict:
+def get_buyercaddy_usage_metrics(
+    total_credits: float | None = None,
+    allow_db_fallback: bool = True,
+) -> dict:
     _, _, total_default = _get_buyercaddy_config()
     total = float(total_credits or total_default)
     report = fetch_buyercaddy_usage_report()
@@ -171,13 +174,14 @@ def get_buyercaddy_usage_metrics(total_credits: float | None = None) -> dict:
     if used_credits is None:
         raise ValueError("BuyerCaddy usage report did not include a usable count")
 
-    today = datetime.now(UTC).date()
+    today = datetime.now(timezone.utc).date()
     days_elapsed = max(today.day, 1)
     avg_daily = used_credits / days_elapsed
 
-    recent_avg = _get_recent_buyercaddy_usage_from_db(7)
-    if recent_avg is not None and recent_avg > 0:
-        avg_daily = recent_avg
+    if allow_db_fallback:
+        recent_avg = _get_recent_buyercaddy_usage_from_db(7)
+        if recent_avg is not None and recent_avg > 0:
+            avg_daily = recent_avg
 
     remaining = max(total - used_credits, 0.0)
 
@@ -197,7 +201,7 @@ def _derive_buyercaddy_remaining_from_posthog(total_default: float) -> tuple[flo
     if not posthog_key or not posthog_project_id:
         return None
 
-    today = datetime.now(UTC).date()
+    today = datetime.now(timezone.utc).date()
     month_start = today.replace(day=1)
     days_to_fetch = max((today - month_start).days + 1, 1)
     daily_counts = fetch_posthog_daily_counts("data_fetched", days_to_fetch)
@@ -309,22 +313,15 @@ def fetch_buyercaddy_credit_snapshot() -> tuple[float, float, bool]:
         return float(remaining), float(total), True
     except Exception as e:
         print(f"[BuyerCaddy] API fetch error: {str(e)}")
-        derived_snapshot = _derive_buyercaddy_remaining_from_posthog(total_default)
-        if derived_snapshot is not None:
-            return derived_snapshot
-
-        derived_snapshot = _derive_buyercaddy_remaining_from_db(total_default)
-        if derived_snapshot is not None:
-            return derived_snapshot
-
-        print("[BuyerCaddy] No real fallback available → returning 0.0")
+        print("[BuyerCaddy] Live credit fetch failed; refusing derived fallback for credits remaining")
         return 0.0, total_default, False
 
 
 def get_buyercaddy_remaining_credits() -> tuple:
     """
     Fetch remaining credits from BuyerCaddy API.
-    Falls back to mock values if not configured or on request failure.
+    Returns a non-real snapshot only when the live credit fetch is unavailable.
     """
     remaining, total, _ = fetch_buyercaddy_credit_snapshot()
     return remaining, total
+
