@@ -2,6 +2,16 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
+export interface ToolSnapshot {
+    recorded_at: string;
+    credits_remaining: number;
+    percent_remaining: number;
+    daily_avg_usage: number;
+    predicted_exhaustion: string | null;
+    status: string;
+    total_credits: number;
+}
+
 export interface ToolData {
     name: string;
     credits_remaining: number;
@@ -11,6 +21,7 @@ export interface ToolData {
     predicted_exhaustion: string | null;
     status: string;
     history?: { day: string, credits: number }[];
+    snapshots?: ToolSnapshot[];
 }
 
 export interface AWSService {

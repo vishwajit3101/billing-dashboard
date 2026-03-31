@@ -8,6 +8,8 @@ load_dotenv()
 from app.calculations import calculate_exhaustion_date, calculate_risk_status, generate_alerts
 from app.notifications import send_alert_email
 
+BALANCE_DELTA_USAGE_TOOLS = {"Buyercaddy"}
+
 
 def _looks_like_update_payload(payload: dict) -> bool:
     if not isinstance(payload, dict):
@@ -215,7 +217,11 @@ def lambda_handler(event, context):
                 daily_usage = tool["daily_avg_usage"]
                 percent = tool["percent_remaining"]
 
-                if name != "Anthropic" and name not in source_history_tools:
+                # Only infer usage from balance deltas for tools that do not have a
+                # trustworthy event/API-backed usage history. This prevents credit
+                # expiry or provider-side resets from showing up as fake usage
+                # spikes for tools like FullEnrich.
+                if name in BALANCE_DELTA_USAGE_TOOLS and name not in source_history_tools:
                     _record_provider_usage_delta(cur, name, today_date, float(credits_rem), existing_tool_snapshots)
                     if daily_usage <= 0:
                         daily_usage = _get_recent_daily_usage(cur, name, 7)

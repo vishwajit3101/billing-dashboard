@@ -28,8 +28,10 @@ resource "aws_lambda_function" "billing_fetcher" {
       ANTHROPIC_ORG_ID     = var.anthropic_org_id
       FULLENRICH_API_KEY   = var.fullenrich_api_key
       BUYERCADDY_API_KEY   = var.buyercaddy_api_key
+      SQS_QUEUE_URL        = var.sqs_queue_url
       ALERT_EMAIL_SENDER   = var.alert_email_sender
       ALERT_EMAIL_RECIPIENT = var.alert_email_recipient
+      DASHBOARD_URL        = var.dashboard_url
     }
   }
 }
@@ -64,6 +66,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "ce:GetCostAndUsage",
           "ses:SendEmail",
           "ses:SendRawEmail",
+          "sqs:SendMessage",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"

@@ -69,10 +69,18 @@ variable "buyercaddy_api_key" {
   sensitive = true
 }
 
+variable "sqs_queue_url" {
+  type = string
+}
+
 variable "alert_email_sender" {
   default = "billing@operator.ai"
 }
 
 variable "alert_email_recipient" {
   default = "admin@operator.ai"
+}
+
+variable "dashboard_url" {
+  default = "http://localhost:8080"
 }
